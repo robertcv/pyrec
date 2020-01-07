@@ -14,3 +14,4 @@ __pycache__
 venv
 notebooks/.ipynb_checkpoints
 data
+!data/MovieLens/ml-latest-small/ratings.csv
