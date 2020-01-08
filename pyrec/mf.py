@@ -1,14 +1,9 @@
 import time
 import numpy as np
+from pyrec.recommender import BaseRecommender, reduce_unique
 
 
-def reduce_unique(data, col=0, min_ratings=50):
-    u, c = np.unique(data[:, col], return_counts=True)
-    select = np.isin(data[:, col], u[c > min_ratings])
-    return data[select]
-
-
-class MatrixFactorization:
+class MatrixFactorization(BaseRecommender):
 
     def __init__(self, k=20, max_iteration=50, batch_size=10000, test_r=0.3,
                  alpha=0.001, mi=0.0001):
@@ -109,10 +104,10 @@ class MatrixFactorization:
         else:
             return self.g_avg
 
-    def top_n(self, user, n):
+    def top_n(self, user, n=5):
         u = np.where(self.users == user)[0][0]
         m = len(self.items)
-        pred = self._pred_vec(np.repeat(u, m), np.arange(m))
+        pred = self._pred_vec(np.repeat(u, m), np.arange(m)) + self.g_avg
         top_n = np.argsort(pred)[-n:]
         return self.items[top_n], pred[top_n]
 
@@ -122,10 +117,11 @@ class MatrixFactorization:
         np.savez(file_name,
                  users=self.users, items=self.items,
                  P=self.P, Q=self.Q,
-                 u_bayes=self.u_bayes, i_bayes=self.i_bayes)
+                 u_bayes=self.u_bayes, i_bayes=self.i_bayes,
+                 u_avg=self.u_avg, i_avg=self.i_avg, g_avg=self.g_avg)
 
     @staticmethod
-    def load(file_name):
+    def load(file_name) -> MatrixFactorization:
         if not file_name.endswith(".npz"):
             file_name += ".npz"
         data = np.load(file_name)
@@ -136,6 +132,10 @@ class MatrixFactorization:
         mf.Q = data["Q"]
         mf.u_bayes = data["u_bayes"]
         mf.i_bayes = data["i_bayes"]
+        mf.u_avg = data["u_avg"]
+        mf.i_avg = data["i_avg"]
+        mf.g_avg = data["g_avg"]
+        return mf
 
 
 if __name__ == '__main__':
@@ -150,12 +150,13 @@ if __name__ == '__main__':
     # good = data[:, 2] > 3
     # data = data[good]
     # data[:, 2] = 1
-    data = reduce_unique(data, min_ratings=100)
-    data = reduce_unique(data, col=1, min_ratings=100)
+    # data = reduce_unique(data, min_ratings=100)
+    # data = reduce_unique(data, items=True, min_ratings=100)
     np.random.shuffle(data)
 
     mf = MatrixFactorization(k=20, max_iteration=100, batch_size=100,
                              test_r=0.1)
     mf.fit(data)
+    mf.save("../models/ml-small-mf")
 
     print(mf.top_n(1, 5))
