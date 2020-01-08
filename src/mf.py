@@ -27,12 +27,19 @@ class MatrixFactorization:
         self.u_bayes = np.array([])
         self.i_bayes = np.array([])
 
+        self.u_avg = np.array([])
+        self.i_avg = np.array([])
+        self.g_avg = 0
+
     def fit(self, data):
         self.users, users_pos = np.unique(data[:, 0], return_inverse=True)
         self.items, items_pos = np.unique(data[:, 1], return_inverse=True)
         ratings = data[:, 2]
         N, M = len(self.users), len(self.items)
         print(f"Full size: ({N}, {M})")
+
+        self.fit_avg(data)
+        ratings -= self.g_avg
 
         train_size = int(len(data) * (1 - self.test_r))
         train_u = users_pos[:train_size]
@@ -78,10 +85,29 @@ class MatrixFactorization:
         return np.sum(self.P[u, :] * self.Q[i, :], axis=1) \
                + self.u_bayes[u] + self.i_bayes[i]
 
+    def fit_avg(self, data):
+        self.u_avg = np.zeros(len(self.users))
+        for i, u in enumerate(self.users):
+            self.u_avg[i] = np.mean(data[data[:, 0] == u, 2])
+
+        self.i_avg = np.zeros(len(self.items))
+        for j, i in enumerate(self.items):
+            self.i_avg[j] = np.mean(data[data[:, 1] == i, 2])
+
+        self.g_avg = np.mean(data[:, 2])
+        print(f"Global avg: {self.g_avg}")
+
     def predict(self, user, item):
-        u = np.where(self.users == user)
-        i = np.where(self.items == item)
-        return self._pred_vec(u, i)
+        u = np.where(self.users == user)[0]
+        i = np.where(self.items == item)[0]
+        if u and i:
+            return self._pred_vec(u, i) + self.g_avg
+        elif u:
+            return self.u_avg[u[0]]
+        elif i:
+            return self.i_avg[i[0]]
+        else:
+            return self.g_avg
 
     def top_n(self, user, n):
         u = np.where(self.users == user)[0][0]
