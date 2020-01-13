@@ -1,6 +1,7 @@
 import time
 import numpy as np
-from pyrec.recommender import BaseRecommender, reduce_unique
+
+from pyrec.recommender import BaseRecommender
 
 
 class MatrixFactorization(BaseRecommender):
@@ -55,7 +56,8 @@ class MatrixFactorization(BaseRecommender):
         n_batches = np.clip(int(len(data) / self.batch_size), 1, len(data))
         print(f"Number of Batches: {n_batches}")
 
-        for _ in range(self.max_iteration):
+        last_e = np.mean(np.abs(test_r - self._pred_vec(test_u, test_i)))
+        for iteration in range(self.max_iteration):
             start_t = time.time()
             np.random.shuffle(train_select)
 
@@ -75,6 +77,11 @@ class MatrixFactorization(BaseRecommender):
             test_e = np.mean(np.abs(test_r - self._pred_vec(test_u, test_i)))
             iter_t = time.time() - start_t
             print(f"iter t: {iter_t:.5f}, train e: {train_e:.5f}, test e: {test_e:.5f}")
+            if last_e < test_e:
+                print(f"Ending after iteration {iteration}")
+                break
+            else:
+                last_e = test_e
 
     def _pred_vec(self, u, i):
         return np.sum(self.P[u, :] * self.Q[i, :], axis=1) \
@@ -96,7 +103,7 @@ class MatrixFactorization(BaseRecommender):
         u = np.where(self.users == user)[0]
         i = np.where(self.items == item)[0]
         if u and i:
-            return self._pred_vec(u, i) + self.g_avg
+            return self._pred_vec(u, i)[0] + self.g_avg
         elif u:
             return self.u_avg[u[0]]
         elif i:
@@ -111,6 +118,13 @@ class MatrixFactorization(BaseRecommender):
         top_n = np.argsort(pred)[-n:]
         return self.items[top_n], pred[top_n]
 
+    def top_nth(self, user, nth):
+        u = np.where(self.users == user)[0][0]
+        m = len(self.items)
+        pred = self._pred_vec(np.repeat(u, m), np.arange(m)) + self.g_avg
+        top_n = np.argsort(pred)[-nth]
+        return self.items[top_n], pred[top_n]
+
     def save(self, file_name):
         if not file_name.endswith(".npz"):
             file_name += ".npz"
@@ -121,7 +135,7 @@ class MatrixFactorization(BaseRecommender):
                  u_avg=self.u_avg, i_avg=self.i_avg, g_avg=self.g_avg)
 
     @staticmethod
-    def load(file_name) -> MatrixFactorization:
+    def load(file_name) -> 'MatrixFactorization':
         if not file_name.endswith(".npz"):
             file_name += ".npz"
         data = np.load(file_name)
@@ -140,8 +154,11 @@ class MatrixFactorization(BaseRecommender):
 
 if __name__ == '__main__':
     import pandas as pd
-    # RATINGS_FILE = "/home/robertcv/mag/data/MovieLens/ml-latest/ratings.csv"
-    RATINGS_FILE = "/home/robertcv/mag/data/MovieLens/ml-latest-small/ratings.csv"
+
+    from pyrec.recommender import reduce_unique
+
+    RATINGS_FILE = "../data/MovieLens/ml-latest/ratings.csv"
+    # RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
 
     # userId, movieId, rating
     df = pd.read_csv(RATINGS_FILE)
@@ -150,13 +167,14 @@ if __name__ == '__main__':
     # good = data[:, 2] > 3
     # data = data[good]
     # data[:, 2] = 1
-    # data = reduce_unique(data, min_ratings=100)
-    # data = reduce_unique(data, items=True, min_ratings=100)
+    data = reduce_unique(data, min_ratings=100)
+    data = reduce_unique(data, items=True, min_ratings=100)
     np.random.shuffle(data)
 
-    mf = MatrixFactorization(k=20, max_iteration=100, batch_size=100,
+    mf = MatrixFactorization(k=20, max_iteration=100, batch_size=1000,
                              test_r=0.1)
     mf.fit(data)
-    mf.save("../models/ml-small-mf")
+    mf.save("../models/ml-mf")
 
     print(mf.top_n(1, 5))
+    print(mf.top_nth(1, 5))

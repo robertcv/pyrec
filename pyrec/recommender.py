@@ -1,23 +1,3 @@
-import numpy as np
-
-
-def reduce_unique(data, items=False, min_ratings=50):
-    """
-    Remove users/items that dont have at least min_ratings.
-    Args:
-        data (np.ndarray): of shape (N, 3)
-        items (bool): if True reduce items else reduce users
-        min_ratings (int): minimum number of ratings to keep the user/item
-
-    Returns:
-        np.ndarray: reduced data
-    """
-    col = 1 if items else 0
-    u, c = np.unique(data[:, col], return_counts=True)
-    select = np.isin(data[:, col], u[c > min_ratings])
-    return data[select]
-
-
 class BaseRecommender:
     def fit(self, data):
         """
@@ -46,5 +26,17 @@ class BaseRecommender:
         Returns:
             np.ndarray: itemids
             np.ndarray: predicted ratings
+        """
+        raise NotImplementedError
+
+    def top_nth(self, user, nth):
+        """
+        Return the nth top rating.
+        Args:
+            user: userid
+            nth: number of top ratings to return
+        Returns:
+            float: itemid
+            float: predicted rating
         """
         raise NotImplementedError
