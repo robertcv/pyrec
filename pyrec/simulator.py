@@ -2,7 +2,6 @@ import numpy as np
 
 from pyrec.inventory import Inventory
 from pyrec.recommender import BaseRecommender
-from pyrec.mf import MatrixFactorization
 
 
 class RandomSimulator:
@@ -41,13 +40,13 @@ class RandomSimulator:
 
 
 if __name__ == '__main__':
-    import pandas as pd
-    RATINGS_FILE = "/home/robertcv/mag/data/MovieLens/ml-latest-small/ratings.csv"
+    from pyrec.data import UIRData
+    from pyrec.recommender import MatrixFactorization
 
-    df = pd.read_csv(RATINGS_FILE)
-    data = df.values[:, :-1]
+    RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
+    uir_data = UIRData.from_csv(RATINGS_FILE)
 
     mf = MatrixFactorization.load("../models/ml-small-mf")
-    inv = Inventory(data)
-    sim = RandomSimulator(data, mf, inv)
+    inv = Inventory(uir_data)
+    sim = RandomSimulator(uir_data, mf, inv)
     sim.run()

@@ -1,25 +1,21 @@
-import pandas as pd
-
+from pyrec.data import UIRData
 from pyrec.inventory import Inventory
-from pyrec.mf import MatrixFactorization
-from pyrec.post_processing import MostInInvRecommender
+from pyrec.recommender import MatrixFactorization, MostInInvRecommender
 from pyrec.simulator import RandomSimulator
 
 
 RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
-
-df = pd.read_csv(RATINGS_FILE)
-data = df.values[:, :-1]
+uir_data = UIRData.from_csv(RATINGS_FILE)
 
 mf = MatrixFactorization.load("../models/ml-small-mf")
-inv = Inventory(data)
-miir = MostInInvRecommender(mf, inv)
+inv = Inventory(uir_data)
+miir = MostInInvRecommender(inv)
 
 print()
 print("Simulate recommending by best score:")
-sim = RandomSimulator(data, mf, inv)
+sim = RandomSimulator(uir_data, mf, inv)
 sim.run()
 print()
 print("Simulate recommending by most in inventory:")
-sim = RandomSimulator(data, miir, inv)
+sim = RandomSimulator(uir_data, miir, inv)
 sim.run()

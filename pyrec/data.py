@@ -27,9 +27,12 @@ class UIRData:
         self.unique_values = None  # type: Optional[UIRData.uir_type]
         self.indexed_data = None  # type: Optional[UIRData.uir_type]
 
-        self.train_index = None  # type: Optional[np.ndarray]
-        self.validate_index = None  # type: Optional[np.ndarray]
-        self.test_indexes = None  # type: Optional[np.ndarray]
+        self.user2index = {}
+        self.item2index = {}
+
+        self._train_data = None  # type: Optional[UIRData.uir_type]
+        self._validation_data = None  # type: Optional[UIRData.uir_type]
+        self._test_data = None  # type: Optional[UIRData.uir_type]
 
         self._user_avg = None  # type: Optional[np.ndarray]
         self._item_avg = None  # type: Optional[np.ndarray]
@@ -77,13 +80,14 @@ class UIRData:
                                              items=items_pos,
                                              ratings=None)
 
+        self.user2index = {user: i for i, user in enumerate(users)}
+        self.item2index = {item: i for i, item in enumerate(items)}
+
     def preprocess_train(self):
         """
         Calculate average ratings for user, movies and globally for the
         training dataset. For users/items not in traning dataset we use nan.
         """
-        self.__needs_preprocess()
-
         df = pd.DataFrame(data={"users": self.train_data.users,
                                 "items": self.train_data.items,
                                 "ratings": self.train_data.ratings})
@@ -110,54 +114,66 @@ class UIRData:
                                          items=self.raw_data.items[subset],
                                          ratings=self.raw_data.ratings[subset])
 
-    def split(self, train=0.6, validate=0.1, test=0.3, keep_order=False):
+    def split(self, train=0.6, validation=0.1, keep_order=False):
         """
         Prepare the split of data into train, validation and test sets.
         If keep_order then data is split consecutively.
         :param train: proportion of train data
-        :param validate: proportion of validation data
-        :param test: proportion of test data
+        :param validation: proportion of validation data
         :param keep_order: keep order of input data
         """
-        train, validate, test = np.array([train, validate, test]) / \
-                                (train + validate + test)
+        self.__needs_preprocess()
 
         indexes = np.arange(self.uir_n)
         if not keep_order:
             np.random.shuffle(indexes)
 
-        self.train_index, self.validate_index, self.test_indexes = \
+        train_index, validation_index, test_indexes = \
             np.split(indexes, [int(train * self.uir_n),
-                               int((train + validate) * self.uir_n)])
+                               int((train + validation) * self.uir_n)])
+
+        self._train_data = self.uir_type(
+            users=self.indexed_data.users[train_index],
+            items=self.indexed_data.items[train_index],
+            ratings=self.raw_data.ratings[train_index]
+        )
+        self._validation_data = self.uir_type(
+            users=self.indexed_data.users[validation_index],
+            items=self.indexed_data.items[validation_index],
+            ratings=self.raw_data.ratings[validation_index]
+        )
+        self._test_data = self.uir_type(
+            users=self.indexed_data.users[test_indexes],
+            items=self.indexed_data.items[test_indexes],
+            ratings=self.raw_data.ratings[test_indexes]
+        )
 
     def __needs_preprocess(self):
         if self.indexed_data is None:
             self.preprocess()
 
-    @property
-    def train_data(self) -> uir_type:
-        self.__needs_preprocess()
-        return self.uir_type(users=self.indexed_data.users[self.train_index],
-                             items=self.indexed_data.items[self.train_index],
-                             ratings=self.raw_data.ratings[self.train_index])
+    def __needs_split(self):
+        if self._train_data is None:
+            self.split()
+
+    def __needs_preprocess_train(self):
+        if self._user_avg is None:
+            self.preprocess_train()
 
     @property
-    def validate_data(self) -> uir_type:
-        self.__needs_preprocess()
-        return self.uir_type(users=self.indexed_data.users[self.validate_index],
-                             items=self.indexed_data.items[self.validate_index],
-                             ratings=self.raw_data.ratings[self.validate_index])
+    def train_data(self) -> uir_type:
+        self.__needs_split()
+        return self._train_data
+
+    @property
+    def validation_data(self) -> uir_type:
+        self.__needs_split()
+        return self._validation_data
 
     @property
     def test_data(self) -> uir_type:
-        self.__needs_preprocess()
-        return self.uir_type(users=self.indexed_data.users[self.test_indexes],
-                             items=self.indexed_data.items[self.test_indexes],
-                             ratings=self.raw_data.ratings[self.test_indexes])
-
-    def __needs_preprocess_train(self):
-        if self.user_avg is None:
-            self.preprocess_train()
+        self.__needs_split()
+        return self._train_data
 
     @property
     def user_avg(self) -> np.ndarray:
@@ -176,5 +192,6 @@ class UIRData:
 
 
 if __name__ == '__main__':
-    movie_lens = "../data/MovieLens/ml-latest/ratings.csv"
+    movie_lens = "../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(movie_lens)
+    print(uir_data.train_data)
