@@ -1,9 +1,18 @@
+from typing import Union
+
 import numpy as np
+
+from pyrec.data import UIRData
 
 
 class Inventory:
-    def __init__(self, data):
-        unique, unique_counts = np.unique(data[:, 1], return_counts=True)
+    def __init__(self, data: Union[UIRData, np.ndarray]):
+        if isinstance(data, UIRData):
+            unique, unique_counts = np.unique(data.raw_data.items,
+                                              return_counts=True)
+        else:
+            unique, unique_counts = np.unique(data, return_counts=True)
+
         self.items = unique
         self.item2i = {item: i for i, item in enumerate(self.items)}
         self.counts = unique_counts
@@ -31,12 +40,10 @@ class Inventory:
 
 
 if __name__ == '__main__':
-    import pandas as pd
-    RATINGS_FILE = "/home/robertcv/mag/data/MovieLens/ml-latest-small/ratings.csv"
+    RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
 
-    df = pd.read_csv(RATINGS_FILE)
-    data = df.values[:, :-1]
-    item = data[0, 1]
+    data = UIRData.from_csv(RATINGS_FILE)
+    item = data.unique_values.items[0]
 
     inv = Inventory(data)
     inv.remove_item(item)
