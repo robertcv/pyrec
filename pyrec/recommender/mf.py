@@ -82,11 +82,11 @@ class MatrixFactorization(BaseRecommender):
                + self.u_bayes[u] + self.i_bayes[i]
 
     def _predict(self, user_index: int, item_index: int) -> float:
-        return self._pred_vec(user_index, item_index)
+        return self._pred_vec([user_index], [item_index])[0]
 
     def _predict_user(self, user_index):
-        m = len(self.data.unique_values.items)
-        return self._pred_vec(np.repeat(user_index, m), np.arange(m))
+        return self._pred_vec(np.repeat(user_index, self.data.m),
+                              np.arange(self.data.m))
 
     def save(self, file_name):
         if not file_name.endswith(".npz"):
@@ -111,10 +111,12 @@ if __name__ == '__main__':
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
 
-    mf = MatrixFactorization(k=20, max_iteration=100, batch_size=1000)
+    mf = MatrixFactorization(k=20, max_iteration=20, batch_size=100)
     mf.fit(uir_data)
-    mf.save("../../models/ml-small-mf")
+    # mf.save("../../models/ml-small-mf")
 
-    print(mf.predict(uir_data.unique_values.users[0],
-                     uir_data.unique_values.items[0]))
-    print(mf.top_n(uir_data.unique_values.users[0], n=10))
+    r = mf.predict(uir_data.unique_values.users[0],
+                   uir_data.unique_values.items[0])
+    print(f"item 0, user 0: {r}")
+    for i, r in zip(*mf.top_n(uir_data.unique_values.users[0], n=10)):
+        print(f"item: {i}\trating: {r}")

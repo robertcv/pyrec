@@ -41,4 +41,4 @@ class BaseRecommender:
             pred = self.data.item_avg
 
         top_n = np.argsort(pred)[-n:][::-1]
-        return list(zip(self.data.unique_values.items[top_n], pred[top_n]))
+        return self.data.unique_values.items[top_n], pred[top_n]

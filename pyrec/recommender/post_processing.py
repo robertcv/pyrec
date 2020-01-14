@@ -9,6 +9,12 @@ class MostInInvRecommender(BaseRecommender):
         super().__init__()
         self.inv = inv
 
+    def _predict(self, user_index: int, item_index: int) -> float:
+        rating = self.inv.counts[item_index]
+        rating = rating / self.inv.counts.max()
+        rating = rating * self.data.train_data.ratings.max()
+        return rating
+
     def _predict_user(self, _: int) -> np.ndarray:
         ratings = self.inv.counts.copy()
         ratings = ratings / ratings.max()

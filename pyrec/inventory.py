@@ -35,6 +35,9 @@ class Inventory:
     def percent_left(self):
         return self.current_count() / self.start_size
 
+    def percent_empty(self):
+        return np.sum(self.counts == 0) / len(self.counts)
+
     def __bool__(self):
         return not np.any(self.counts)
 
