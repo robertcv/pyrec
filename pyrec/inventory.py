@@ -19,6 +19,14 @@ class Inventory:
         self.start_size = np.sum(self.counts)
         print(f"All items in inventory: {self.start_size}")
 
+    def copy(self) -> 'Inventory':
+        inv = Inventory(np.array([]))
+        inv.items = np.array(self.items)
+        inv.item2i = self.item2i.copy()
+        inv.counts = np.array(self.counts)
+        inv.start_size = self.start_size
+        return inv
+
     def remove_item(self, item):
         i = self.item2i[item]
         self.counts[i] = max(0, self.counts[i] - 1)
@@ -34,6 +42,9 @@ class Inventory:
 
     def percent_left(self):
         return self.current_count() / self.start_size
+
+    def percent_sold(self):
+        return 1 - self.percent_left()
 
     def percent_empty(self):
         return np.sum(self.counts == 0) / len(self.counts)

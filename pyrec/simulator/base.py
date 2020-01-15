@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
@@ -24,7 +25,7 @@ class BaseSimulator:
     def run(self, iter=1000):
         ratings_diff = []
         empty_items = []
-        current_count = []
+        sold_items = []
 
         for _ in range(iter):
             u = self.select_user()
@@ -35,20 +36,28 @@ class BaseSimulator:
 
             if not self.inv.is_empty(i):
                 self.inv.remove_item(i)
-                current_count.append(self.inv.percent_left())
+                sold_items.append(self.inv.percent_sold() * 100)
             else:
-                current_count.append(current_count[-1])
-            empty_items.append(np.sum(self.inv.counts == 0) / len(self.inv.counts))
+                sold_items.append(sold_items[-1])
+            empty_items.append(self.inv.percent_empty() * 100)
 
         print(f"Average rmse: {np.sqrt(sum(ratings_diff) / len(ratings_diff))} for {len(ratings_diff)} ratings")
         print(f"Percent empty items: {empty_items[-1]}")
-        print(f"Percent items count: {current_count[-1]}")
+        print(f"Percent sold items: {sold_items[-1]}")
 
         self.sim_data = {
             "empty_items": empty_items,
-            "current_count": current_count
+            "sold_items": sold_items
         }
 
-    def plot(self):
-        pass
+    def plot(self, save_file=None):
+        empty_items = np.array(self.sim_data["empty_items"])
+        sold_items = np.array(self.sim_data["sold_items"])
 
+        fig, ax = plt.subplots()
+        ax.plot(empty_items)
+        ax.plot(sold_items)
+
+        if save_file is not None:
+            fig.savefig(save_file)
+        plt.show()
