@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -7,7 +9,9 @@ from pyrec.recommender import BaseRecommender
 
 
 class BaseSimulator:
-    def __init__(self, data: UIRData, rec: BaseRecommender, inv: Inventory):
+    def __init__(self, name, data: UIRData, rec: BaseRecommender,
+                 inv: Inventory):
+        self.name = name
         self.data = data
         self.rec = rec
         self.inv = inv
@@ -57,6 +61,20 @@ class BaseSimulator:
         fig, ax = plt.subplots()
         ax.plot(empty_items)
         ax.plot(sold_items)
+
+        if save_file is not None:
+            fig.savefig(save_file)
+        plt.show()
+
+    @staticmethod
+    def multi_plot(simulations: List['BaseSimulator'], data="empty_items",
+                   save_file=None):
+        fig, ax = plt.subplots()
+
+        for sim in simulations:
+            ax.plot(sim.sim_data[data], label=sim.name)
+
+        ax.legend()
 
         if save_file is not None:
             fig.savefig(save_file)
