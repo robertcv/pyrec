@@ -22,28 +22,29 @@ class BaseSimulator:
         raise NotImplementedError
 
     def run(self, iter=1000):
-        ratings = []
+        ratings_diff = []
         empty_items = []
         current_count = []
 
         for _ in range(iter):
             u = self.select_user()
             i, r = self.select_item(u)
+
+            if u in self.data.hier_ratings and i in self.data.hier_ratings[u]:
+                ratings_diff.append((r - self.data.hier_ratings[u][i]) ** 2)
+
             if not self.inv.is_empty(i):
                 self.inv.remove_item(i)
-                ratings.append(r)
                 current_count.append(self.inv.percent_left())
             else:
-                ratings.append(ratings[-1])
                 current_count.append(current_count[-1])
             empty_items.append(np.sum(self.inv.counts == 0) / len(self.inv.counts))
 
-        print(f"Average rating: {sum(ratings) / iter}")
+        print(f"Average rmse: {np.sqrt(sum(ratings_diff) / len(ratings_diff))} for {len(ratings_diff)} ratings")
         print(f"Percent empty items: {empty_items[-1]}")
         print(f"Percent items count: {current_count[-1]}")
 
         self.sim_data = {
-            "ratings": ratings,
             "empty_items": empty_items,
             "current_count": current_count
         }

@@ -5,30 +5,37 @@ from pyrec.inventory import Inventory
 
 
 class MostInInvRecommender(BaseRecommender):
-    def __init__(self, inv: Inventory):
+    def __init__(self, inv: Inventory, rec: BaseRecommender):
         super().__init__()
         self.inv = inv
+        self.rec = rec
 
     def _predict(self, user_index: int, item_index: int) -> float:
-        rating = self.inv.counts[item_index]
-        rating = rating / self.inv.counts.max()
-        rating = rating * self.data.train_data.ratings.max()
-        return rating
+        return self.rec._predict(user_index, item_index)
 
-    def _predict_user(self, _: int) -> np.ndarray:
-        ratings = self.inv.counts.copy()
-        ratings = ratings / ratings.max()
-        ratings = ratings * self.data.train_data.ratings.max()
-        return ratings
+    def top_n(self, user, n=5):
+        # sort by most in inventory
+        top_n = np.argsort(self.inv.counts)[-n:][::-1]
+
+        u = self.data.user2index.get(user, None)
+        if u is not None:
+            pred = self.rec._predict_user(u)
+        else:
+            pred = self.data.item_avg
+
+        return self.data.unique_values.items[top_n], pred[top_n]
 
 
 if __name__ == '__main__':
     from pyrec.data import UIRData
+    from pyrec.recommender import MatrixFactorization
 
-    uir_data = UIRData(np.array([1, 1, 2]), np.array([3, 2, 1]),
-                       np.array([0, 5, 10]))
-    inv = Inventory(np.array([1, 2, 3, 1, 2, 2]))
+    RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
+    uir_data = UIRData.from_csv(RATINGS_FILE)
+    inv = Inventory(uir_data)
+    mf = MatrixFactorization.load("../../models/ml-small-mf")
+    mf.data = uir_data
 
-    mr = MostInInvRecommender(inv)
+    mr = MostInInvRecommender(inv, mf)
     mr.fit(uir_data)
-    print(mr.top_n(1))
+    print(mr.top_n(5))

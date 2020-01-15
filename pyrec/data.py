@@ -1,4 +1,5 @@
-from typing import Optional, NamedTuple
+from typing import Optional, NamedTuple, Dict, Any
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -15,7 +16,8 @@ class UIRData:
 
     def __init__(self,
                  users: np.ndarray, items: np.ndarray, ratings: np.ndarray,
-                 auto_r=False, auto_prep=True, auto_s=True, auto_pt=True):
+                 auto_r=False, auto_prep=True, auto_s=True, auto_ptrain=True,
+                 auto_ptest=True):
 
         self.raw_data = UIRData.uir_type(users=np.array(users),
                                          items=np.array(items),
@@ -33,6 +35,7 @@ class UIRData:
         self._train_data = None  # type: Optional[UIRData.uir_type]
         self._validation_data = None  # type: Optional[UIRData.uir_type]
         self._test_data = None  # type: Optional[UIRData.uir_type]
+        self._hier_ratings = None  # type: Optional[Dict[Any, Dict[Any, float]]]
 
         self._user_avg = None  # type: Optional[np.ndarray]
         self._item_avg = None  # type: Optional[np.ndarray]
@@ -48,11 +51,14 @@ class UIRData:
         if auto_s:
             self.split()
 
-        if auto_pt:
+        if auto_ptrain:
             self.preprocess_train()
 
+        if auto_ptest:
+            self.preprocess_test()
+
     @staticmethod
-    def from_csv(file_name: str) -> 'UIRData':
+    def from_csv(file_name: str, **kwargs) -> 'UIRData':
         """
         Load csv data from file_name. The first three columns are assumed
         to be user ids, item ids and ratings.
@@ -60,7 +66,8 @@ class UIRData:
         :return: a new URIData object initialized with data from csv
         """
         df = pd.read_csv(file_name)
-        return UIRData(df.values[:, 0], df.values[:, 1], df.values[:, 2])
+        return UIRData(df.values[:, 0], df.values[:, 1], df.values[:, 2],
+                       **kwargs)
 
     def preprocess(self):
         """
@@ -101,6 +108,11 @@ class UIRData:
         self._item_avg = items_df.merge(items_avg_df, how="left")["ratings"].values
 
         self._global_avg = np.mean(self.train_data.ratings)
+
+    def preprocess_test(self):
+        self._hier_ratings = defaultdict(dict)
+        for u, i, r in zip(*self.test_data):
+            self._hier_ratings[self.unique_values.users[u]][self.unique_values.items[i]] = r
 
     def reduce(self, items=False, min_ratings=50):
         """
@@ -160,6 +172,10 @@ class UIRData:
         if self._user_avg is None:
             self.preprocess_train()
 
+    def __needs_preprocess_test(self):
+        if self._hier_ratings is None:
+            self.preprocess_test()
+
     @property
     def train_data(self) -> uir_type:
         self.__needs_split()
@@ -189,6 +205,11 @@ class UIRData:
     def global_avg(self) -> float:
         self.__needs_preprocess_train()
         return self._global_avg
+
+    @property
+    def hier_ratings(self):
+        self.__needs_preprocess_test()
+        return self._hier_ratings
 
 
 if __name__ == '__main__':
