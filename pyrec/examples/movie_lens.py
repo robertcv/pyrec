@@ -1,8 +1,12 @@
+import numpy as np
+
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
 from pyrec.recommender import MatrixFactorization, MostInInvRecommender
 from pyrec.simulator import RandomFromTopNSimulator
 
+
+np.random.seed(0)
 
 RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
 uir_data = UIRData.from_csv(RATINGS_FILE)

@@ -108,6 +108,8 @@ class MatrixFactorization(BaseRecommender):
 
 
 if __name__ == '__main__':
+    np.random.seed(0)
+
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
 
