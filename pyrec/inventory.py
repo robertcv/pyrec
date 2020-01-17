@@ -1,6 +1,7 @@
 from typing import Union
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from pyrec.data import UIRData
 
@@ -52,6 +53,19 @@ class Inventory:
     def __bool__(self):
         return not np.any(self.counts)
 
+    def plot_dist(self):
+        plt.hist(self.counts, color='blue', edgecolor='black', bins=100)
+        plt.show()
+
+
+class UniformInventory(Inventory):
+    def __init__(self, data: Union[UIRData, np.ndarray]):
+        super().__init__(data)
+        n = int(self.start_size / len(self.items))
+        self.counts = np.ones(len(self.items), dtype=int) * n
+        self.start_size = len(self.items) * n
+        print(f"All items in inventory: {self.start_size}")
+
 
 if __name__ == '__main__':
     RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
@@ -63,3 +77,4 @@ if __name__ == '__main__':
     inv.remove_item(item)
     print(inv.is_empty(item))
     print(inv.item_count(item))
+    inv.plot_dist()
