@@ -18,8 +18,12 @@ class RandomSimulator(BaseSimulator):
 
 
 class RandomFromTopNSimulator(RandomSimulator):
+    def __init__(self, name, data, rec, inv, n=5):
+        super().__init__(name, data, rec, inv)
+        self.n = n
+
     def select_item(self, user):
-        items, ratings = self.rec.top_n(user)
+        items, ratings = self.rec.top_n(user, n=self.n)
         random_index = np.random.randint(len(items))
         return items[random_index], ratings[random_index]
 
@@ -35,5 +39,5 @@ if __name__ == '__main__':
     mf = MatrixFactorization.load("../../models/ml-small-mf")
     mf.data = uir_data
     inv = Inventory(uir_data)
-    sim = RandomSimulator(uir_data, mf, inv)
+    sim = RandomSimulator("rand", uir_data, mf, inv)
     sim.run()

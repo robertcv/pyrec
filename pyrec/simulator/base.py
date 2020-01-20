@@ -59,8 +59,12 @@ class BaseSimulator:
         sold_items = np.array(self.sim_data["sold_items"])
 
         fig, ax = plt.subplots()
-        ax.plot(empty_items)
-        ax.plot(sold_items)
+        ax.plot(empty_items, label="empty items")
+        ax.plot(sold_items, label="items sold")
+        ax.legend()
+        ax.set_xlabel('iteration')
+        ax.set_ylabel('percent')
+        ax.set_title('Inventory change throughout the simulation')
 
         if save_file is not None:
             fig.savefig(save_file)
@@ -75,6 +79,9 @@ class BaseSimulator:
             ax.plot(sim.sim_data[data], label=sim.name)
 
         ax.legend()
+        ax.set_xlabel('iteration')
+        ax.set_ylabel('percent')
+        ax.set_title(f'Change of {data} throughout the simulations')
 
         if save_file is not None:
             fig.savefig(save_file)

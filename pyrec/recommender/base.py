@@ -32,6 +32,11 @@ class BaseRecommender:
     def _predict_user(self, user_index: int) -> np.ndarray:
         raise NotImplementedError
 
+    def _top_n_indexes(self, pred, n):
+        # TODO: if multiple values are the same we have to randomly
+        # select which to put in topN
+        return np.argsort(pred)[-n:][::-1]
+
     def top_n(self, user, n=5):
         u = self.data.user2index.get(user, None)
 
@@ -40,5 +45,5 @@ class BaseRecommender:
         else:
             pred = self.data.item_avg
 
-        top_n = np.argsort(pred)[-n:][::-1]
+        top_n = self._top_n_indexes(pred, n)
         return self.data.unique_values.items[top_n], pred[top_n]

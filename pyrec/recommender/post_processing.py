@@ -5,25 +5,39 @@ from pyrec.inventory import Inventory
 
 
 class MostInInvRecommender(BaseRecommender):
-    def __init__(self, inv: Inventory, rec: BaseRecommender):
+    def __init__(self, inv: Inventory):
         super().__init__()
         self.inv = inv
+
+    def _predict(self, _: int, item_index: int) -> float:
+        return self.inv.counts[item_index] / self.inv.counts.max() * \
+               self.data.train_data.ratings.max()
+
+    def _predict_user(self, _: int) -> np.ndarray:
+        ratings = np.array(self.inv.counts)
+        ratings = ratings / ratings.max()
+        ratings = ratings * self.data.train_data.ratings.max()
+        return ratings
+
+
+class WeightedRecommender(MostInInvRecommender):
+    """
+    r = alpha * rec_r + (1 - alpha) * inv_r
+    """
+    def __init__(self, inv: Inventory, rec: BaseRecommender, alpha=0.5):
+        super().__init__(inv)
         self.rec = rec
+        self.alpha = alpha
 
     def _predict(self, user_index: int, item_index: int) -> float:
-        return self.rec._predict(user_index, item_index)
+        r = self.alpha * self.rec._predict(user_index, item_index) + \
+            (1 - self.alpha) * super()._predict(user_index, item_index)
+        return r
 
-    def top_n(self, user, n=5):
-        # sort by most in inventory
-        top_n = np.argsort(self.inv.counts)[-n:][::-1]
-
-        u = self.data.user2index.get(user, None)
-        if u is not None:
-            pred = self.rec._predict_user(u)
-        else:
-            pred = self.data.item_avg
-
-        return self.data.unique_values.items[top_n], pred[top_n]
+    def _predict_user(self, user_index: int) -> np.ndarray:
+        ratings = self.alpha * self.rec._predict_user(user_index) + \
+            (1 - self.alpha) * super()._predict_user(user_index)
+        return ratings
 
 
 if __name__ == '__main__':
@@ -36,6 +50,6 @@ if __name__ == '__main__':
     mf = MatrixFactorization.load("../../models/ml-small-mf")
     mf.data = uir_data
 
-    mr = MostInInvRecommender(inv, mf)
+    mr = MostInInvRecommender(inv)
     mr.fit(uir_data)
     print(mr.top_n(5))
