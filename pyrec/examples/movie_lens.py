@@ -1,7 +1,7 @@
 import numpy as np
 
 from pyrec.data import UIRData
-from pyrec.inventory import Inventory
+from pyrec.inventory import Inventory, UniformInventory
 from pyrec.recommender import MatrixFactorization, MostInInvRecommender, \
     WeightedRecommender
 from pyrec.simulator import RandomFromTopNSimulator
@@ -14,7 +14,8 @@ RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
 uir_data = UIRData.from_csv(RATINGS_FILE)
 
 # create inventory for simulations
-inv = Inventory(uir_data)
+inv = UniformInventory(uir_data)
+# inv.reduce(0.5)
 inv2 = inv.copy()
 inv3 = inv.copy()
 
@@ -22,7 +23,7 @@ inv3 = inv.copy()
 mf = MatrixFactorization.load("../../models/ml-small-mf")
 mf.data = uir_data
 
-wr = WeightedRecommender(inv2, mf, alpha=0.5)
+wr = WeightedRecommender(inv2, mf, alpha=0.85)
 wr.fit(uir_data)
 
 miir = MostInInvRecommender(inv3)
@@ -36,8 +37,8 @@ sim1.run(iter=10_000)
 sim1.plot()
 
 print()
-print("Simulate recommending by alpha:")
-sim2 = RandomFromTopNSimulator("alpha", uir_data, wr, inv2)
+print(f"Simulate recommending by alpha={wr.alpha}:")
+sim2 = RandomFromTopNSimulator(f"alpha={wr.alpha}", uir_data, wr, inv2)
 sim2.run(iter=10_000)
 sim2.plot()
 

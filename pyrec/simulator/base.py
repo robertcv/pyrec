@@ -64,7 +64,7 @@ class BaseSimulator:
         ax.legend()
         ax.set_xlabel('iteration')
         ax.set_ylabel('percent')
-        ax.set_title('Inventory change throughout the simulation')
+        ax.set_title(f'Inventory change throughout {self.name} simulation')
 
         if save_file is not None:
             fig.savefig(save_file)

@@ -18,7 +18,6 @@ class Inventory:
         self.item2i = {item: i for i, item in enumerate(self.items)}
         self.counts = unique_counts
         self.start_size = np.sum(self.counts)
-        print(f"All items in inventory: {self.start_size}")
 
     def copy(self) -> 'Inventory':
         inv = Inventory(np.array([]))
@@ -27,6 +26,11 @@ class Inventory:
         inv.counts = np.array(self.counts)
         inv.start_size = self.start_size
         return inv
+
+    def reduce(self, p=0.1):
+        self.counts = (self.counts * p).astype(int)
+        self.counts[self.counts == 0] = 1
+        self.start_size = np.sum(self.counts)
 
     def remove_item(self, item):
         i = self.item2i[item]
