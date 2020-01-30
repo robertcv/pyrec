@@ -1,5 +1,6 @@
-from typing import Optional, NamedTuple, Dict, Any
+from typing import Optional, NamedTuple, Dict, Any, Set
 from collections import defaultdict
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -35,7 +36,8 @@ class UIRData:
         self._train_data = None  # type: Optional[UIRData.uir_type]
         self._validation_data = None  # type: Optional[UIRData.uir_type]
         self._test_data = None  # type: Optional[UIRData.uir_type]
-        self._hier_ratings = None  # type: Optional[Dict[Any, Dict[Any, float]]]
+        self._hier_test_ratings = None  # type: Optional[Dict[Any, Dict[Any, float]]]
+        self._hier_bought = None  # type: Optional[Dict[Any, Set]]
 
         self._user_avg = None  # type: Optional[np.ndarray]
         self._item_avg = None  # type: Optional[np.ndarray]
@@ -110,9 +112,19 @@ class UIRData:
         self._global_avg = np.mean(self.train_data.ratings)
 
     def preprocess_test(self):
-        self._hier_ratings = defaultdict(dict)
+        """
+        Save test data ratings and items already 'bought' from train and
+        validation data into dictionaries for faster access.
+        """
+        self._hier_test_ratings = defaultdict(dict)
         for u, i, r in zip(*self.test_data):
-            self._hier_ratings[self.unique_values.users[u]][self.unique_values.items[i]] = r
+            self._hier_test_ratings[self.unique_values.users[u]][self.unique_values.items[i]] = r
+
+        self._hier_bought = defaultdict(set)
+        for u, i, _ in zip(*self.train_data):
+            self._hier_bought[self.unique_values.users[u]].add(self.unique_values.items[i])
+        for u, i, _ in zip(*self.validation_data):
+            self._hier_bought[self.unique_values.users[u]].add(self.unique_values.items[i])
 
     def reduce(self, items=False, min_ratings=50):
         """
@@ -173,7 +185,7 @@ class UIRData:
             self.preprocess_train()
 
     def __needs_preprocess_test(self):
-        if self._hier_ratings is None:
+        if self._hier_test_ratings is None:
             self.preprocess_test()
 
     @property
@@ -207,9 +219,16 @@ class UIRData:
         return self._global_avg
 
     @property
-    def hier_ratings(self):
+    def hier_test_ratings(self) -> Dict[Any, Dict[Any, float]]:
+        """by value"""
         self.__needs_preprocess_test()
-        return self._hier_ratings
+        return self._hier_test_ratings
+
+    @property
+    def hier_bought(self) -> Dict[Any, Set]:
+        """by values"""
+        self.__needs_preprocess_test()
+        return deepcopy(self._hier_bought)
 
 
 if __name__ == '__main__':

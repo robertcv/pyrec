@@ -23,9 +23,34 @@ class RandomFromTopNSimulator(RandomSimulator):
         self.n = n
 
     def select_item(self, user):
-        items, ratings = self.rec.top_n(user, n=self.n)
-        random_index = np.random.randint(len(items))
+        items, ratings = self.top_n(user, self.n)
+        random_index = np.random.randint(self.n)
         return items[random_index], ratings[random_index]
+
+    def top_n(self, user, n):
+        not_bought = self.user_has_not_bought(user)
+
+        pred = self.rec.predict_user(user)[not_bought]
+        arg_sort = np.argsort(pred)[::-1]
+        pred = pred[arg_sort]
+        items = self.data.unique_values.items[not_bought][arg_sort]
+
+        return self._top_n_multiple(items, pred, n)
+
+    @staticmethod
+    def _top_n_multiple(items, pred, n):
+        top_items, top_pred = np.array(items[:n]), np.array(pred[:n])
+
+        if pred[n - 1] == pred[n]:
+            # if the last in top ratings and the next rating are the same
+            # we must randomly select new such items
+            same_pred = pred[n]
+            same_size = np.sum(pred[:n] == same_pred)
+            same_indexes = np.where(pred == same_pred)[0]
+            new_items = np.random.choice(same_indexes, same_size, replace=False)
+            top_items[-same_size:] = items[new_items]
+
+        return top_items, top_pred
 
 
 if __name__ == '__main__':

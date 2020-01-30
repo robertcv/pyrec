@@ -15,19 +15,34 @@ class BaseSimulator:
                  inv: Inventory, verbose=True):
         self.name = name
         self.data = data
+        self.bought = data.hier_bought
+        self.test_ratings = data.hier_test_ratings
         self.rec = rec
         self.inv = inv
         self.verbose = verbose
 
         self.sim_data = {}
 
-    def select_item(self, u):
+    def select_item(self, user):
         """Return selected item and it's rating."""
         raise NotImplementedError
 
     def select_user(self):
         """Return selected user."""
         raise NotImplementedError
+
+    def user_has_not_bought(self, user) -> np.ndarray:
+        """
+        Return an array of booleans if item has previously been bought by user.
+        """
+        bought = np.zeros(len(self.data.unique_values.items))
+        for item in self.bought[user]:
+            bought[self.data.item2index[item]] = 1
+        return ~(bought.astype(bool))
+
+    def user_bought_item(self, user, item):
+        """Note that item has been bought by user."""
+        self.bought[user].add(item)
 
     def _print_verbose(self, per):
         if self.verbose:
@@ -49,20 +64,27 @@ class BaseSimulator:
             if _i % _n == 0:
                 self._print_verbose(_i / n)
 
-            u = self.select_user()
-            i, r = self.select_item(u)
+            user = self.select_user()
+            item, r = self.select_item(user)
 
-            if u in self.data.hier_ratings and i in self.data.hier_ratings[u]:
-                ratings_diff.append((r - self.data.hier_ratings[u][i]) ** 2)
+            if user in self.test_ratings and item in self.test_ratings[user]:
+                ratings_diff.append((r - self.test_ratings[user][item]) ** 2)
 
-            if not self.inv.is_empty(i):
-                self.inv.remove_item(i)
+            if not self.inv.is_empty(item):
+                self.inv.remove_item(item)
+                self.user_bought_item(user, item)
                 sold_items.append(self.inv.percent_sold() * 100)
             else:
                 sold_items.append(sold_items[-1])
             empty_items.append(self.inv.percent_empty() * 100)
 
         self._print_verbose(1)
+
+        try:
+            rmse = np.sqrt(sum(ratings_diff) / len(ratings_diff))
+        except ZeroDivisionError:
+            rmse = self.data.raw_data.ratings.max() - \
+                   self.data.raw_data.ratings.min()
 
         self.sim_data = {
             "empty_items": empty_items,

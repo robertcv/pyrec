@@ -17,6 +17,11 @@ class BaseRecommender:
         raise NotImplementedError
 
     def predict(self, user, item):
+        return self._predict(self.data.user2index[user],
+                             self.data.item2index[item])
+
+    def predict_unknown(self, user, item):
+        """Use if user or item or bough are maybe unknown"""
         u = self.data.user2index.get(user, None)
         i = self.data.item2index.get(item, None)
 
@@ -32,34 +37,14 @@ class BaseRecommender:
     def _predict_user(self, user_index: int) -> np.ndarray:
         raise NotImplementedError
 
-    @staticmethod
-    def _top_n_indexes(pred, n):
-        arg_sort = np.argsort(pred)[::-1]
-        if pred[arg_sort[n - 1]] != pred[arg_sort[n]]:
-            return arg_sort[:n]
+    def predict_user(self, user):
+        return self._predict_user(self.data.user2index[user])
 
-        # for multiple values chose at random
-        top_arg_sort = arg_sort[:n]
-        same_pred = pred[arg_sort[n]]
-        same_size = np.sum(pred[top_arg_sort] == same_pred)
-        same_indexes = np.where(pred == same_pred)[0]
-        same_random = np.random.choice(same_indexes, same_size, replace=False)
-        top_arg_sort[-same_size:] = same_random
-        return top_arg_sort
-
-    def top_n(self, user, n=5):
+    def predict_unknown_user(self, user):
+        """Use if user maybe unknown"""
         u = self.data.user2index.get(user, None)
 
         if u is not None:
-            pred = self._predict_user(u)
+            return self._predict_user(u)
         else:
-            pred = self.data.item_avg
-
-        top_n = self._top_n_indexes(pred, n)
-        return self.data.unique_values.items[top_n], pred[top_n]
-
-
-if __name__ == '__main__':
-    pred = np.array([5, 5, 4, 3, 3, 3, 3, 3, 2, 2, 1])
-    np.random.shuffle(pred)
-    BaseRecommender._top_n_indexes(pred, 5)
+            return self.data.item_avg
