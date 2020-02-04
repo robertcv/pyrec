@@ -15,7 +15,7 @@ RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
 uir_data = UIRData.from_csv(RATINGS_FILE)
 
 # create inventory for simulations
-UNIFORM = True
+UNIFORM = False
 if UNIFORM:
     inv = UniformInventory(uir_data)
 else:
@@ -73,17 +73,36 @@ if UNIFORM:
 else:
     figure_file += "_inv"
 
-sim1.plot(figure_file + "_mf.png")
-sim2.plot(figure_file + "_alpha_90.png")
-sim3.plot(figure_file + "_alpha_85.png")
-sim4.plot(figure_file + "_alpha_80.png")
-sim5.plot(figure_file + "_alpha_75.png")
-sim6.plot(figure_file + "_alpha_70.png")
-sim7.plot(figure_file + "_mii.png")
-
-RandomFromTopNSimulator.multi_plot([sim1, sim2, sim3, sim4, sim5, sim6, sim7],
-                                   data="sold_items",
-                                   save_file=figure_file + "_sold.png")
-RandomFromTopNSimulator.multi_plot([sim1, sim2, sim3, sim4, sim5, sim6, sim7],
-                                   data="empty_items",
-                                   save_file=figure_file + "_empty.png")
+# sim1.rmse()
+# sim2.rmse()
+# sim3.rmse()
+# sim4.rmse()
+# sim5.rmse()
+# sim6.rmse()
+# sim7.rmse()
+#
+# sim1.plot_items(figure_file + "_i_mf.png")
+# sim2.plot_items(figure_file + "_i_alpha_90.png")
+# sim3.plot_items(figure_file + "_i_alpha_85.png")
+# sim4.plot_items(figure_file + "_i_alpha_80.png")
+# sim5.plot_items(figure_file + "_i_alpha_75.png")
+# sim6.plot_items(figure_file + "_i_alpha_70.png")
+# sim7.plot_items(figure_file + "_i_mii.png")
+#
+sim1.plot_ratings(figure_file + "_r_mf.png")
+sim2.plot_ratings(figure_file + "_r_alpha_90.png")
+sim3.plot_ratings(figure_file + "_r_alpha_85.png")
+sim4.plot_ratings(figure_file + "_r_alpha_80.png")
+sim5.plot_ratings(figure_file + "_r_alpha_75.png")
+sim6.plot_ratings(figure_file + "_r_alpha_70.png")
+sim7.plot_ratings(figure_file + "_r_mii.png")
+#
+# RandomFromTopNSimulator.multi_plot([sim1, sim2, sim3, sim4, sim5, sim6, sim7],
+#                                    data="sold_items",
+#                                    save_file=figure_file + "_sold.png")
+# RandomFromTopNSimulator.multi_plot([sim1, sim2, sim3, sim4, sim5, sim6, sim7],
+#                                    data="empty_items",
+#                                    save_file=figure_file + "_empty.png")
+# RandomFromTopNSimulator.multi_plot([sim1, sim2, sim3, sim4, sim5, sim6, sim7],
+#                                    data="not_sold_items",
+#                                    save_file=figure_file + "_not_sold.png")

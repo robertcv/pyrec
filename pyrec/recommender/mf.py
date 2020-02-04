@@ -120,5 +120,3 @@ if __name__ == '__main__':
     r = mf.predict(uir_data.unique_values.users[0],
                    uir_data.unique_values.items[0])
     print(f"item 0, user 0: {r}")
-    for i, r in zip(*mf.top_n(uir_data.unique_values.users[0], n=10)):
-        print(f"item: {i}\trating: {r}")

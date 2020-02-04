@@ -3,6 +3,7 @@ from copy import deepcopy
 from multiprocessing import Process, Manager, Queue
 
 import numpy as np
+from scipy.signal import convolve
 import matplotlib.pyplot as plt
 
 from pyrec.data import UIRData
@@ -56,7 +57,10 @@ class BaseSimulator:
     def run(self, n=1000):
         ratings_diff = []
         empty_items = []
-        sold_items = []
+        sold_items = [0]
+        not_sold_items = [0]
+        test_ratings = [0]
+        predicted_ratings = []
 
         _n = n // 10
 
@@ -67,15 +71,21 @@ class BaseSimulator:
             user = self.select_user()
             item, r = self.select_item(user)
 
+            predicted_ratings.append(r)
             if user in self.test_ratings and item in self.test_ratings[user]:
+                test_ratings.append(self.test_ratings[user][item])
                 ratings_diff.append((r - self.test_ratings[user][item]) ** 2)
+            else:
+                test_ratings.append(test_ratings[-1])
 
             if not self.inv.is_empty(item):
                 self.inv.remove_item(item)
                 self.user_bought_item(user, item)
                 sold_items.append(self.inv.percent_sold() * 100)
+                not_sold_items.append(not_sold_items[-1])
             else:
                 sold_items.append(sold_items[-1])
+                not_sold_items.append(not_sold_items[-1] + 1)
             empty_items.append(self.inv.percent_empty() * 100)
 
         self._print_verbose(1)
@@ -88,13 +98,19 @@ class BaseSimulator:
 
         self.sim_data = {
             "empty_items": empty_items,
-            "sold_items": sold_items,
-            "rmse": np.sqrt(sum(ratings_diff) / len(ratings_diff)),
+            "sold_items": sold_items[1:],
+            "test_ratings": test_ratings[1:],
+            "predicted_ratings": predicted_ratings,
+            "not_sold_items": not_sold_items[1:],
+            "rmse": rmse,
             "rmse_number": len(ratings_diff),
         }
         return deepcopy(self.sim_data)
 
-    def plot(self, save_file=None):
+    def rmse(self):
+        print(f"{self.name}: {self.sim_data['rmse']:.2f} for {self.sim_data['rmse_number']} ratings")
+
+    def plot_items(self, save_file=None):
         empty_items = np.array(self.sim_data["empty_items"])
         sold_items = np.array(self.sim_data["sold_items"])
 
@@ -111,6 +127,28 @@ class BaseSimulator:
         else:
             plt.show()
 
+    def plot_ratings(self, save_file=None, mean_size=50):
+        test_ratings = np.array(self.sim_data["test_ratings"])
+        predicted_ratings = np.array(self.sim_data["predicted_ratings"])
+
+        b = np.ones(mean_size) / mean_size
+        b2 = np.ones(mean_size * 2) / (mean_size * 2)
+        test_ratings = convolve(test_ratings, b, mode="same")
+        predicted_ratings = convolve(predicted_ratings, b2, mode="same")
+
+        fig, ax = plt.subplots()
+        ax.plot(test_ratings, label="test rating")
+        ax.plot(predicted_ratings, label="predicted rating")
+        ax.legend()
+        ax.set_xlabel('iteration')
+        ax.set_ylabel('rating')
+        ax.set_title(f'Change of rating for item in {self.name} simulation')
+
+        if save_file is not None:
+            fig.savefig(save_file)
+        else:
+            plt.show()
+
     @staticmethod
     def multi_plot(simulations: List['BaseSimulator'], data="empty_items",
                    save_file=None):
@@ -121,7 +159,6 @@ class BaseSimulator:
 
         ax.legend()
         ax.set_xlabel('iteration')
-        ax.set_ylabel('percent')
         ax.set_title(f'Change of {data} throughout the simulations')
 
         if save_file is not None:
