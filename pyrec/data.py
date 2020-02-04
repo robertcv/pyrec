@@ -201,7 +201,7 @@ class UIRData:
     @property
     def test_data(self) -> uir_type:
         self.__needs_split()
-        return self._train_data
+        return self._test_data
 
     @property
     def user_avg(self) -> np.ndarray:
