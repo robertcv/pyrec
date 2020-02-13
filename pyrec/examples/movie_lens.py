@@ -18,7 +18,7 @@ print(len(uir_data.user_avg))
 print(len(uir_data.item_avg))
 
 # create inventory for simulations
-UNIFORM = True
+UNIFORM = False
 if UNIFORM:
     inv = UniformInventory(uir_data)
 else:
@@ -63,7 +63,7 @@ sim7 = RandomFromTopNSimulator("most in inv", uir_data, miir, _inv)
 
 # run simulations
 print("run simulations")
-ms = MultiSimulator(200_000)
+ms = MultiSimulator(100_000)
 ms.set_sims([sim1, sim3, sim5, sim7])
 ms.run_parallel()
 
@@ -76,10 +76,10 @@ if UNIFORM:
 else:
     figure_file += "_inv"
 
-plot_ratings_violin(sim1, save_file=figure_file + "_rviola.png")
-plot_ratings_violin(sim3, save_file=figure_file + "_rviola.png")
-plot_ratings_violin(sim5, save_file=figure_file + "_rviola.png")
-plot_ratings_violin(sim7, save_file=figure_file + "_rviola.png")
+plot_ratings_violin(sim1, save_file=figure_file + "_rviola_mf.png")
+plot_ratings_violin(sim3, save_file=figure_file + "_rviola_alpha_85.png")
+plot_ratings_violin(sim5, save_file=figure_file + "_rviola_alpha_75.png")
+plot_ratings_violin(sim7, save_file=figure_file + "_rviola_mii.png")
 
 multi_plot([sim1, sim3, sim5, sim7],
            data="sold_items",

@@ -112,6 +112,8 @@ def plot_ratings_violin(sim: BaseSimulator, save_file=None, n=10):
     n_sub = int(len(test_ratings) / n)
     ax.set_xticks(np.arange(1, n + 1))
     ax.set_xticklabels(map(str, np.arange(1, n + 1) * n_sub))
+    for label in ax.xaxis.get_ticklabels()[::2]:
+        label.set_visible(False)
     ax.set_title(f'Change of ratings in {sim.name} simulation')
 
     if save_file is not None:

@@ -10,8 +10,11 @@ class MostInInvRecommender(BaseRecommender):
         self.inv = inv
 
     def _predict(self, _: int, item_index: int) -> float:
-        return self.inv.counts[item_index] / self.inv.counts.max() * \
-               self.data.train_data.ratings.max()
+        if self.inv.counts.max() > 1:
+            return self.inv.counts[item_index] / self.inv.counts.max() * \
+                   self.data.train_data.ratings.max()
+        else:
+            return self.data.train_data.ratings.max()
 
     def _predict_user(self, _: int) -> np.ndarray:
         ratings = np.array(self.inv.counts)
@@ -52,4 +55,3 @@ if __name__ == '__main__':
 
     mr = MostInInvRecommender(inv)
     mr.fit(uir_data)
-    print(mr.top_n(5))
