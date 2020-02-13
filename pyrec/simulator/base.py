@@ -1,10 +1,7 @@
-from typing import List
 from copy import deepcopy
 from multiprocessing import Process, Manager, Queue
 
 import numpy as np
-from scipy.signal import convolve
-import matplotlib.pyplot as plt
 
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
@@ -59,7 +56,7 @@ class BaseSimulator:
         empty_items = []
         sold_items = [0]
         not_sold_items = [0]
-        test_ratings = [0]
+        test_ratings = []
         predicted_ratings = []
 
         _n = n // 10
@@ -76,11 +73,12 @@ class BaseSimulator:
                 test_ratings.append(self.test_ratings[user][item])
                 ratings_diff.append((r - self.test_ratings[user][item]) ** 2)
             else:
-                test_ratings.append(test_ratings[-1])
+                test_ratings.append(np.nan)
+
+            self.user_bought_item(user, item)
 
             if not self.inv.is_empty(item):
                 self.inv.remove_item(item)
-                self.user_bought_item(user, item)
                 sold_items.append(self.inv.percent_sold() * 100)
                 not_sold_items.append(not_sold_items[-1])
             else:
@@ -99,7 +97,7 @@ class BaseSimulator:
         self.sim_data = {
             "empty_items": empty_items,
             "sold_items": sold_items[1:],
-            "test_ratings": test_ratings[1:],
+            "test_ratings": test_ratings,
             "predicted_ratings": predicted_ratings,
             "not_sold_items": not_sold_items[1:],
             "rmse": rmse,
@@ -110,61 +108,29 @@ class BaseSimulator:
     def rmse(self):
         print(f"{self.name}: {self.sim_data['rmse']:.2f} for {self.sim_data['rmse_number']} ratings")
 
-    def plot_items(self, save_file=None):
-        empty_items = np.array(self.sim_data["empty_items"])
-        sold_items = np.array(self.sim_data["sold_items"])
 
-        fig, ax = plt.subplots()
-        ax.plot(empty_items, label="empty items")
-        ax.plot(sold_items, label="items sold")
-        ax.legend()
-        ax.set_xlabel('iteration')
-        ax.set_ylabel('percent')
-        ax.set_title(f'Inventory change throughout {self.name} simulation')
+class TestSimulator(BaseSimulator):
+    def __init__(self, name, data: UIRData, rec: BaseRecommender,
+                 inv: Inventory, verbose=True):
+        super().__init__(name, data, rec, inv, verbose)
 
-        if save_file is not None:
-            fig.savefig(save_file)
-        else:
-            plt.show()
+    def select_item(self, user):
+        not_bought = self.user_has_not_bought(user)
+        pred = self.rec.predict_user(user)[not_bought]
+        best_pred = np.max(pred)
+        same_indexes = np.where(pred == best_pred)[0]
+        item_index = np.random.choice(same_indexes, 1, replace=False)[0]
+        item = self.data.unique_values.items[not_bought][item_index]
+        return item, best_pred
 
-    def plot_ratings(self, save_file=None, mean_size=50):
-        test_ratings = np.array(self.sim_data["test_ratings"])
-        predicted_ratings = np.array(self.sim_data["predicted_ratings"])
+    def select_user(self):
+        return self.data.index2user[0]
 
-        b = np.ones(mean_size) / mean_size
-        b2 = np.ones(mean_size * 2) / (mean_size * 2)
-        test_ratings = convolve(test_ratings, b, mode="same")
-        predicted_ratings = convolve(predicted_ratings, b2, mode="same")
-
-        fig, ax = plt.subplots()
-        ax.plot(test_ratings, label="test rating")
-        ax.plot(predicted_ratings, label="predicted rating")
-        ax.legend()
-        ax.set_xlabel('iteration')
-        ax.set_ylabel('rating')
-        ax.set_title(f'Change of rating for item in {self.name} simulation')
-
-        if save_file is not None:
-            fig.savefig(save_file)
-        else:
-            plt.show()
-
-    @staticmethod
-    def multi_plot(simulations: List['BaseSimulator'], data="empty_items",
-                   save_file=None):
-        fig, ax = plt.subplots()
-
-        for sim in simulations:
-            ax.plot(sim.sim_data[data], label=sim.name)
-
-        ax.legend()
-        ax.set_xlabel('iteration')
-        ax.set_title(f'Change of {data} throughout the simulations')
-
-        if save_file is not None:
-            fig.savefig(save_file)
-        else:
-            plt.show()
+    def user_has_not_bought(self, user):
+        has_not_bought = super().user_has_not_bought(user)
+        if np.all(~has_not_bought):
+            raise Exception("user has bought all items")
+        return has_not_bought
 
 
 class MultiSimulator:
@@ -196,3 +162,18 @@ class MultiSimulator:
     def __run_sim(i: int, sim: BaseSimulator, n: int, q: Queue):
         sim_data = sim.run(n)
         q.put((i, sim_data))
+
+
+if __name__ == '__main__':
+    from pyrec.recommender import MatrixFactorization
+
+    np.random.seed(0)
+
+    RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
+    uir_data = UIRData.from_csv(RATINGS_FILE)
+    inv = Inventory(uir_data)
+    mf = MatrixFactorization.load("../../models/ml-small-mf")
+    mf.data = uir_data
+
+    sim = TestSimulator("best score", uir_data, mf, inv)
+    sim.run(1000)

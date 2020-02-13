@@ -189,6 +189,16 @@ class UIRData:
             self.preprocess_test()
 
     @property
+    def index2user(self):
+        self.__needs_preprocess()
+        return self.unique_values.users
+
+    @property
+    def index2item(self):
+        self.__needs_preprocess()
+        return self.unique_values.items
+
+    @property
     def train_data(self) -> uir_type:
         self.__needs_split()
         return self._train_data
