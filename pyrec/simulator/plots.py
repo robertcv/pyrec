@@ -74,6 +74,7 @@ def _violin_plot(ax, data1, label1, data2, label2, n):
     stats2 = _violin_stats(data2, n)
 
     width = 0.5
+    m_width = 0.25
     alpha = 0.5
     fillcolor1 = ax._get_lines.get_next_color()
     fillcolor2 = ax._get_lines.get_next_color()
@@ -86,12 +87,16 @@ def _violin_plot(ax, data1, label1, data2, label2, n):
             val = 0.5 * width * val / val.max()
             ax.fill_betweenx(coords, -val + pos, pos,
                              facecolor=fillcolor1, alpha=alpha)
+            ax.hlines(s1['mean'], -m_width + pos, pos,
+                      colors=fillcolor1)
         if s2 is not None:
             coords = s2["coords"]
             val = np.array(s2['vals'])
             val = 0.5 * width * val / val.max()
-            ax.fill_betweenx(coords, pos + val, pos,
+            ax.fill_betweenx(coords, pos, pos + val,
                              facecolor=fillcolor2, alpha=alpha)
+            ax.hlines(s2['mean'], pos, pos + m_width,
+                      colors=fillcolor2)
 
     ax.legend(handles=[
         mpatches.Patch(color=fillcolor1, alpha=alpha, label=label1),
