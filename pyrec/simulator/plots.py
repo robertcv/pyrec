@@ -149,7 +149,7 @@ if __name__ == '__main__':
     from pyrec.data import UIRData
     from pyrec.inventory import Inventory
     from pyrec.recommender import MatrixFactorization
-    from pyrec.simulator import RandomFromTopNSimulator, TestSimulator
+    from pyrec.simulator import TestSimulator
 
     np.random.seed(0)
 
