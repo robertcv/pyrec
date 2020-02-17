@@ -113,6 +113,8 @@ class TestSimulator(BaseSimulator):
     def __init__(self, name, data: UIRData, rec: BaseRecommender,
                  inv: Inventory, verbose=True):
         super().__init__(name, data, rec, inv, verbose)
+        self.user = max((len(i), u)
+                        for u, i in self.data.hier_test_ratings.items())[1]
 
     def select_item(self, user):
         not_bought = self.user_has_not_bought(user)
@@ -124,13 +126,20 @@ class TestSimulator(BaseSimulator):
         return item, best_pred
 
     def select_user(self):
-        return self.data.index2user[0]
+        return self.user
 
     def user_has_not_bought(self, user):
         has_not_bought = super().user_has_not_bought(user)
         if np.all(~has_not_bought):
             raise Exception("user has bought all items")
         return has_not_bought
+
+    def run(self, n=1000):
+        has_not_bought = self.user_has_not_bought(self.user)
+        if n > np.sum(has_not_bought):
+            n = np.sum(has_not_bought)
+            print(f"To many iterations; new n={n}")
+        super().run(n)
 
 
 class MultiSimulator:

@@ -32,10 +32,11 @@ def plot_ratings(sim: BaseSimulator, save_file=None, mean_size=50):
     test_ratings = np.array(sim.sim_data["test_ratings"])
     predicted_ratings = np.array(sim.sim_data["predicted_ratings"])
 
-    b = np.ones(mean_size) / mean_size
-    b2 = np.ones(mean_size * 10) / (mean_size * 10)
-    test_ratings = convolve(test_ratings, b, mode="same")
-    predicted_ratings = convolve(predicted_ratings, b2, mode="same")
+    if mean_size > 0:
+        b = np.ones(mean_size) / mean_size
+        b2 = np.ones(mean_size * 10) / (mean_size * 10)
+        test_ratings = convolve(test_ratings, b, mode="same")
+        predicted_ratings = convolve(predicted_ratings, b2, mode="same")
 
     fig, ax = plt.subplots()
     ax.plot(test_ratings, label="test rating")
@@ -60,7 +61,7 @@ def _violin_stats(data, n):
         return kde.evaluate(coords)
 
     stats = []
-    for i, d in enumerate(np.split(data, n)):
+    for i, d in enumerate(np.array_split(data, n)):
         _d = d[~np.isnan(d)]
         if len(_d) > 0:
             stats.extend(violin_stats(_d, _kde_method))
@@ -157,7 +158,7 @@ if __name__ == '__main__':
     inv = Inventory(uir_data)
     mf = MatrixFactorization.load("../../models/ml-small-mf")
     mf.data = uir_data
-    sim = RandomFromTopNSimulator("best score", uir_data, mf, inv)
-    sim.run(1_000)
+    sim = TestSimulator("best score", uir_data, mf, inv)
+    sim.run(10_000)
 
     plot_ratings_violin(sim)
