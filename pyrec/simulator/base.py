@@ -112,9 +112,9 @@ class BaseSimulator:
 class TestSimulator(BaseSimulator):
     def __init__(self, name, data: UIRData, rec: BaseRecommender,
                  inv: Inventory, verbose=True):
-        super().__init__(name, data, rec, inv, verbose)
         self.user = max((len(i), u)
-                        for u, i in self.data.hier_test_ratings.items())[1]
+                        for u, i in data.hier_test_ratings.items())[1]
+        super().__init__(name + f" (U={self.user})", data, rec, inv, verbose)
 
     def select_item(self, user):
         not_bought = self.user_has_not_bought(user)
@@ -139,7 +139,7 @@ class TestSimulator(BaseSimulator):
         if n > np.sum(has_not_bought):
             n = np.sum(has_not_bought)
             print(f"To many iterations; new n={n}")
-        super().run(n)
+        return super().run(n)
 
 
 class MultiSimulator:
@@ -185,4 +185,4 @@ if __name__ == '__main__':
     mf.data = uir_data
 
     sim = TestSimulator("best score", uir_data, mf, inv)
-    sim.run(1000)
+    sim.run(10_000)
