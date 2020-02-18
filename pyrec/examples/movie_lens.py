@@ -14,8 +14,7 @@ np.random.seed(0)
 print("load data")
 RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
 uir_data = UIRData.from_csv(RATINGS_FILE)
-print(len(uir_data.user_avg))
-print(len(uir_data.item_avg))
+print(uir_data)
 
 # create inventory for simulations
 UNIFORM = False
@@ -23,6 +22,7 @@ if UNIFORM:
     inv = UniformInventory(uir_data)
 else:
     inv = Inventory(uir_data)
+print(inv)
 
 # fit models and create sims
 print("fit models")

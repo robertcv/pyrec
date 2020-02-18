@@ -19,6 +19,9 @@ class Inventory:
         self.counts = unique_counts
         self.start_size = np.sum(self.counts)
 
+    def __repr__(self):
+        return f"Inv ({self.current_count()} all, {len(self.counts)} items)"
+
     def copy(self) -> 'Inventory':
         inv = Inventory(np.array([]))
         inv.items = np.array(self.items)
@@ -78,6 +81,7 @@ if __name__ == '__main__':
     item = data.unique_values.items[0]
 
     inv = Inventory(data)
+    print(inv)
     inv.remove_item(item)
     print(inv.is_empty(item))
     print(inv.item_count(item))

@@ -59,6 +59,9 @@ class UIRData:
         if auto_ptest:
             self.preprocess_test()
 
+    def __repr__(self):
+        return f"URI ({self.uir_n} rows, {self.n} users, {self.m} items)"
+
     @staticmethod
     def from_csv(file_name: str, **kwargs) -> 'UIRData':
         """
@@ -244,4 +247,5 @@ class UIRData:
 if __name__ == '__main__':
     movie_lens = "../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(movie_lens)
+    print(uir_data)
     print(uir_data.train_data)
