@@ -86,6 +86,9 @@ class BaseSimulator:
                 not_sold_items.append(not_sold_items[-1] + 1)
             empty_items.append(self.inv.percent_empty() * 100)
 
+            if not self.inv.current_count():
+                break
+
         self._print_verbose(1)
 
         try:

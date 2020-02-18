@@ -145,6 +145,29 @@ def multi_plot(simulations: List['BaseSimulator'], data="empty_items",
         plt.show()
 
 
+def multi_success(simulations: List['BaseSimulator'], save_file=None):
+    rmse = [sim.sim_data["rmse"] for sim in simulations]
+    sold = [sim.sim_data["sold_items"][-1] for sim in simulations]
+    label = [sim.name[:6] for sim in simulations]
+
+    fig, ax = plt.subplots()
+    ax.scatter(rmse, sold)
+
+    rmse_padding = min(rmse) * 0.01
+    sold_padding = min(sold) * 0.01
+    for i, txt in enumerate(label):
+        ax.annotate(txt, (rmse[i] + rmse_padding, sold[i] + sold_padding))
+
+    ax.set_xlabel('RMSE')
+    ax.set_ylabel('Items sold [%]')
+    ax.set_title(f'Success of RSs')
+
+    if save_file is not None:
+        fig.savefig(save_file)
+    else:
+        plt.show()
+
+
 if __name__ == '__main__':
     from pyrec.data import UIRData
     from pyrec.inventory import Inventory
