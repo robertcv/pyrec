@@ -6,36 +6,36 @@ import numpy as np
 import pandas as pd
 
 
+uir_type = NamedTuple("uir_type", [("users", np.ndarray),
+                                   ("items", np.ndarray),
+                                   ("ratings", Optional[np.ndarray])])
+
+
 class UIRData:
     """
     Class encapsulating (user, item, rating) style data and metadata for
     recommender systems.
     """
-    uir_type = NamedTuple("uir_type", [("users", np.ndarray),
-                                       ("items", np.ndarray),
-                                       ("ratings", Optional[np.ndarray])])
-
     def __init__(self,
                  users: np.ndarray, items: np.ndarray, ratings: np.ndarray,
                  auto_r=False, auto_prep=True, auto_s=True, auto_ptrain=True,
                  auto_ptest=True):
 
-        self.raw_data = UIRData.uir_type(users=np.array(users),
-                                         items=np.array(items),
-                                         ratings=np.array(ratings,
-                                                          dtype=np.float))
+        self.raw_data = uir_type(users=np.array(users),
+                                 items=np.array(items),
+                                 ratings=np.array(ratings, dtype=np.float))
         self.uir_n = len(users)
         self.n, self.m = 0, 0
 
-        self.unique_values = None  # type: Optional[UIRData.uir_type]
-        self.indexed_data = None  # type: Optional[UIRData.uir_type]
+        self.unique_values = None  # type: Optional[uir_type]
+        self.indexed_data = None  # type: Optional[uir_type]
 
         self.user2index = {}
         self.item2index = {}
 
-        self._train_data = None  # type: Optional[UIRData.uir_type]
-        self._validation_data = None  # type: Optional[UIRData.uir_type]
-        self._test_data = None  # type: Optional[UIRData.uir_type]
+        self._train_data = None  # type: Optional[uir_type]
+        self._validation_data = None  # type: Optional[uir_type]
+        self._test_data = None  # type: Optional[uir_type]
         self._hier_test_ratings = None  # type: Optional[Dict[Any, Dict[Any, float]]]
         self._hier_bought = None  # type: Optional[Dict[Any, Set]]
 
@@ -86,16 +86,16 @@ class UIRData:
         users, users_pos = np.unique(self.raw_data.users, return_inverse=True)
         items, items_pos = np.unique(self.raw_data.items, return_inverse=True)
 
-        self.unique_values = UIRData.uir_type(users=users,
-                                              items=items,
-                                              ratings=None)
+        self.unique_values = uir_type(users=users,
+                                      items=items,
+                                      ratings=None)
 
         self.n = len(self.unique_values.users)
         self.m = len(self.unique_values.items)
 
-        self.indexed_data = UIRData.uir_type(users=users_pos,
-                                             items=items_pos,
-                                             ratings=None)
+        self.indexed_data = uir_type(users=users_pos,
+                                     items=items_pos,
+                                     ratings=None)
 
         self.user2index = {user: i for i, user in enumerate(users)}
         self.item2index = {item: i for i, item in enumerate(items)}
@@ -142,9 +142,9 @@ class UIRData:
         col = 1 if items else 0
         u, c = np.unique(self.raw_data[col], return_counts=True)
         subset = np.isin(self.raw_data[col], u[c > min_ratings])
-        self.raw_data = UIRData.uir_type(users=self.raw_data.users[subset],
-                                         items=self.raw_data.items[subset],
-                                         ratings=self.raw_data.ratings[subset])
+        self.raw_data = uir_type(users=self.raw_data.users[subset],
+                                 items=self.raw_data.items[subset],
+                                 ratings=self.raw_data.ratings[subset])
 
     def split(self, train=0.6, validation=0.1, keep_order=False):
         """
@@ -164,17 +164,17 @@ class UIRData:
             np.split(indexes, [int(train * self.uir_n),
                                int((train + validation) * self.uir_n)])
 
-        self._train_data = self.uir_type(
+        self._train_data = uir_type(
             users=self.indexed_data.users[train_index],
             items=self.indexed_data.items[train_index],
             ratings=self.raw_data.ratings[train_index]
         )
-        self._validation_data = self.uir_type(
+        self._validation_data = uir_type(
             users=self.indexed_data.users[validation_index],
             items=self.indexed_data.items[validation_index],
             ratings=self.raw_data.ratings[validation_index]
         )
-        self._test_data = self.uir_type(
+        self._test_data = uir_type(
             users=self.indexed_data.users[test_indexes],
             items=self.indexed_data.items[test_indexes],
             ratings=self.raw_data.ratings[test_indexes]
