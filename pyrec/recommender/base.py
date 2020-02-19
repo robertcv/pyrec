@@ -48,3 +48,9 @@ class BaseRecommender:
             return self._predict_user(u)
         else:
             return self.data.item_avg
+
+    def save(self, file_name):
+        raise NotImplemented
+
+    def load(self, file_name):
+        raise NotImplemented

@@ -18,8 +18,8 @@ class RandomSimulator(BaseSimulator):
 
 
 class RandomFromTopNSimulator(RandomSimulator):
-    def __init__(self, name, data, rec, inv, n=5):
-        super().__init__(name, data, rec, inv)
+    def __init__(self, name, data, rec, inv, verbose=True, n=5):
+        super().__init__(name, data, rec, inv, verbose=verbose)
         self.n = n
 
     def select_item(self, user):
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
 
-    mf = MatrixFactorization.load("../../models/ml-small-mf")
+    mf = MatrixFactorization.load_static("../../models/ml-small-mf")
     mf.data = uir_data
     inv = Inventory(uir_data)
     sim = RandomSimulator("rand", uir_data, mf, inv)

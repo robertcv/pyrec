@@ -1,3 +1,3 @@
 from .base import BaseRecommender
 from .mf import MatrixFactorization
-from .post_processing import MostInInvRecommender, WeightedRecommender
+from .inv_based import MostInInvRecommender, WeightedRecommender

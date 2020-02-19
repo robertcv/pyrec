@@ -1,5 +1,4 @@
 from copy import deepcopy
-from multiprocessing import Process, Manager, Queue
 
 import numpy as np
 
@@ -145,37 +144,6 @@ class TestSimulator(BaseSimulator):
         return super().run(n)
 
 
-class MultiSimulator:
-    def __init__(self, n=1000):
-        self.sims = []
-        self.n = n
-
-    def set_sims(self, sims):
-        self.sims = sims
-
-    def run_parallel(self):
-        jobs = []
-        q = Manager().Queue()
-        for i in range(len(self.sims)):
-            p = Process(target=self.__run_sim,
-                        args=(i, self.sims[i], self.n, q))
-            jobs.append(p)
-            p.start()
-
-        for proc in jobs:
-            proc.join()
-
-        while not q.empty():
-            i, sim_data = q.get()
-            self.sims[i].sim_data = sim_data
-            self.sims[i].name += f" (RMSE={self.sims[i].sim_data['rmse']:.2f})"
-
-    @staticmethod
-    def __run_sim(i: int, sim: BaseSimulator, n: int, q: Queue):
-        sim_data = sim.run(n)
-        q.put((i, sim_data))
-
-
 if __name__ == '__main__':
     from pyrec.recommender import MatrixFactorization
 
@@ -184,7 +152,7 @@ if __name__ == '__main__':
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
     inv = Inventory(uir_data)
-    mf = MatrixFactorization.load("../../models/ml-small-mf")
+    mf = MatrixFactorization.load_static("../../models/ml-small-mf")
     mf.data = uir_data
 
     sim = TestSimulator("best score", uir_data, mf, inv)

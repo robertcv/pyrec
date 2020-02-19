@@ -3,8 +3,8 @@ import numpy as np
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory, UniformInventory
 from pyrec.recommender import MatrixFactorization, WeightedRecommender
-from pyrec.simulator import RandomFromTopNSimulator, MultiSimulator, \
-    multi_success
+from pyrec.simulator import RandomFromTopNSimulator, multi_success
+from pyrec.parallel import MultiSimulator
 
 
 np.random.seed(0)
@@ -23,14 +23,14 @@ else:
 
 # fit models and create sims
 print("fit models")
-mf = MatrixFactorization.load("../../models/ml-small-mf")
+mf = MatrixFactorization.load_static("../../models/ml-small-mf")
 mf.data = uir_data
 
 sims = []
 alphas = [0, 0.4, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1]
 for a in alphas:
     _inv = inv.copy()
-    wr = WeightedRecommender(_inv, mf, alpha=a)
+    wr = WeightedRecommender(a, _inv, mf, {})
     wr.fit(uir_data)
     sims.append(RandomFromTopNSimulator(f"a={wr.alpha}", uir_data, wr, _inv))
 
@@ -49,4 +49,4 @@ if UNIFORM:
 else:
     figure_file += "_inv"
 
-multi_success(sims, save_file=figure_file + "_75k_success.png")
+multi_success(sims, save_file=figure_file + "_50k_success.png")

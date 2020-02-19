@@ -74,6 +74,11 @@ class UIRData:
         return UIRData(df.values[:, 0], df.values[:, 1], df.values[:, 2],
                        **kwargs)
 
+    def copy(self):
+        return UIRData(self.raw_data.users,
+                       self.raw_data.items,
+                       self.raw_data.ratings)
+
     def preprocess(self):
         """
         Prepare some metadata for fester data manipulation.

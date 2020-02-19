@@ -10,7 +10,7 @@ from pyrec.data import UIRData
 class MatrixFactorization(BaseRecommender):
 
     def __init__(self, k=20, max_iteration=50, batch_size=10000,
-                 alpha=0.001, mi=0.0001):
+                 alpha=0.001, mi=0.0001, verbose=True):
         super().__init__()
 
         self.k = k
@@ -18,11 +18,16 @@ class MatrixFactorization(BaseRecommender):
         self.batch_size = batch_size
         self.alpha = alpha
         self.mi = mi
+        self.verbose = verbose
 
         self.P = None  # type: Optional[np.ndarray]
         self.Q = None  # type: Optional[np.ndarray]
         self.u_bayes = None  # type: Optional[np.ndarray]
         self.i_bayes = None  # type: Optional[np.ndarray]
+
+    def _print_verbose(self, out):
+        if self.verbose:
+            print(out)
 
     def fit(self, data: UIRData):
         super().fit(data)
@@ -45,7 +50,7 @@ class MatrixFactorization(BaseRecommender):
         self.i_bayes = np.random.normal(size=(data.m,), scale=.1/self.k)
 
         n_batches = np.clip(int(train_len / self.batch_size), 1, train_len)
-        print(f"Number of Batches: {n_batches}")
+        self._print_verbose(f"Number of Batches: {n_batches}")
 
         last_e = np.mean(np.abs(validation_r -
                                 self._pred_vec(validation_u, validation_i)))
@@ -70,9 +75,9 @@ class MatrixFactorization(BaseRecommender):
             validation_e = np.mean(np.abs(validation_r -
                                           self._pred_vec(validation_u, validation_i)))
             iter_t = time.time() - start_t
-            print(f"iter t: {iter_t:.5f}, train e: {train_e:.5f}, validation e: {validation_e:.5f}")
+            self._print_verbose(f"iter t: {iter_t:.5f}, train e: {train_e:.5f}, validation e: {validation_e:.5f}")
             if last_e < validation_e:
-                print(f"Ending after iteration {iteration}")
+                self._print_verbose(f"Ending after iteration {iteration}")
                 break
             else:
                 last_e = validation_e
@@ -94,8 +99,17 @@ class MatrixFactorization(BaseRecommender):
         np.savez(file_name, P=self.P, Q=self.Q,
                  u_bayes=self.u_bayes, i_bayes=self.i_bayes)
 
+    def load(self, file_name):
+        if not file_name.endswith(".npz"):
+            file_name += ".npz"
+        data = np.load(file_name)
+        self.P = data["P"]
+        self.Q = data["Q"]
+        self.u_bayes = data["u_bayes"]
+        self.i_bayes = data["i_bayes"]
+
     @staticmethod
-    def load(file_name) -> 'MatrixFactorization':
+    def load_static(file_name) -> 'MatrixFactorization':
         if not file_name.endswith(".npz"):
             file_name += ".npz"
         data = np.load(file_name)

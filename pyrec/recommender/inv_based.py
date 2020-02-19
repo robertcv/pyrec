@@ -27,10 +27,28 @@ class WeightedRecommender(MostInInvRecommender):
     """
     r = alpha * rec_r + (1 - alpha) * inv_r
     """
-    def __init__(self, inv: Inventory, rec: BaseRecommender, alpha=0.5):
+    def __init__(self, alpha, inv: Inventory, rec: BaseRecommender,
+                 rec_kwargs: dict, verbose=True):
         super().__init__(inv)
         self.rec = rec
         self.alpha = alpha
+        self.rec_kwargs = rec_kwargs
+        self.verbose = verbose
+        self.rec_kwargs["verbose"] = self.verbose
+
+    def fit(self, data):
+        super().fit(data)
+        if isinstance(self.rec, BaseRecommender):
+            # rec is already an instantiated recommender
+            return
+
+        self.rec = self.rec(**self.rec_kwargs)
+        self.rec.fit(data)
+
+    def __setattr__(self, name, value):
+        if name == "data" and "rec" in self.__dict__ and isinstance(self.rec, BaseRecommender):
+            self.rec.data = value
+        self.__dict__[name] = value
 
     def _predict(self, user_index: int, item_index: int) -> float:
         r = self.alpha * self.rec._predict(user_index, item_index) + \
@@ -42,6 +60,14 @@ class WeightedRecommender(MostInInvRecommender):
             (1 - self.alpha) * super()._predict_user(user_index)
         return ratings
 
+    def save(self, file_name):
+        self.rec.save(file_name)
+
+    def load(self, file_name):
+        if not isinstance(self.rec, BaseRecommender):
+            self.rec = self.rec(**self.rec_kwargs)
+        self.rec.load(file_name)
+
 
 if __name__ == '__main__':
     from pyrec.data import UIRData
@@ -50,7 +76,7 @@ if __name__ == '__main__':
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
     inv = Inventory(uir_data)
-    mf = MatrixFactorization.load("../../models/ml-small-mf")
+    mf = MatrixFactorization.load_static("../../models/ml-small-mf")
     mf.data = uir_data
 
     mr = MostInInvRecommender(inv)

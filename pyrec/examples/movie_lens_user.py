@@ -4,8 +4,8 @@ from pyrec.data import UIRData
 from pyrec.inventory import Inventory
 from pyrec.recommender import MatrixFactorization, MostInInvRecommender, \
     WeightedRecommender
-from pyrec.simulator import TestSimulator, MultiSimulator, \
-    plot_ratings_violin, multi_plot
+from pyrec.simulator import TestSimulator, plot_ratings_violin, multi_plot
+from pyrec.parallel import MultiSimulator
 
 
 np.random.seed(0)
@@ -23,17 +23,17 @@ inv = Inventory(uir_data)
 # fit models and create sims
 print("fit models")
 _inv = inv.copy()
-mf = MatrixFactorization.load("../../models/ml-small-mf")
+mf = MatrixFactorization.load_static("../../models/ml-small-mf")
 mf.data = uir_data
 sim1 = TestSimulator("best score", uir_data, mf, _inv)
 
 _inv = inv.copy()
-wr = WeightedRecommender(_inv, mf, alpha=0.85)
+wr = WeightedRecommender(0.85, _inv, mf, {})
 wr.fit(uir_data)
 sim3 = TestSimulator(f"alpha={wr.alpha}", uir_data, wr, _inv)
 
 _inv = inv.copy()
-wr = WeightedRecommender(_inv, mf, alpha=0.75)
+wr = WeightedRecommender(0.75, _inv, mf, {})
 wr.fit(uir_data)
 sim5 = TestSimulator(f"alpha={wr.alpha}", uir_data, wr, _inv)
 

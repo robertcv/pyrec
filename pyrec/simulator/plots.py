@@ -7,7 +7,7 @@ import matplotlib.patches as mpatches
 from matplotlib.cbook import violin_stats
 import matplotlib.mlab as mlab
 
-from pyrec.simulator import BaseSimulator
+from pyrec.simulator import BaseSimulator, RepeatedSimulation
 
 
 def plot_items(sim: BaseSimulator, save_file=None):
@@ -168,6 +168,42 @@ def multi_success(simulations: List['BaseSimulator'], save_file=None):
         plt.show()
 
 
+def multi_success_err(simulations: List['RepeatedSimulation'], save_file=None):
+    rmse, sold = [], []
+    rmse_e, sold_e = [], []
+    label = []
+
+    for s in simulations:
+        rmse.append(np.mean(s.sim_data["rmse"]))
+        rmse_e.append(np.std(s.sim_data["rmse"]))
+        sold.append(np.mean(s.sim_data["sold_items"]))
+        sold_e.append(np.std(s.sim_data["sold_items"]))
+        label.append(s.name[:6])
+
+    print(rmse)
+    print(rmse_e)
+    print(sold)
+    print(sold_e)
+
+    fig, ax = plt.subplots()
+    ax.scatter(rmse, sold)
+    ax.errorbar(rmse, sold, xerr=rmse_e, yerr=sold_e, fmt='none')
+
+    rmse_padding = min(rmse) * 0.01
+    sold_padding = min(sold) * 0.01
+    for i, txt in enumerate(label):
+        ax.annotate(txt, (rmse[i] + rmse_padding, sold[i] + sold_padding))
+
+    ax.set_xlabel('RMSE')
+    ax.set_ylabel('Items sold [%]')
+    ax.set_title(f'Success of RSs')
+
+    if save_file is not None:
+        fig.savefig(save_file)
+    else:
+        plt.show()
+
+
 if __name__ == '__main__':
     from pyrec.data import UIRData
     from pyrec.inventory import Inventory
@@ -179,7 +215,7 @@ if __name__ == '__main__':
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
     inv = Inventory(uir_data)
-    mf = MatrixFactorization.load("../../models/ml-small-mf")
+    mf = MatrixFactorization.load_static("../../models/ml-small-mf")
     mf.data = uir_data
     sim = TestSimulator("best score", uir_data, mf, inv)
     sim.run(10_000)
