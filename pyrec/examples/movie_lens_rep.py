@@ -20,8 +20,8 @@ for a in alphas:
     rs = RepeatedSimulation(f"a={a}", uir_data, inv,
                             WeightedRecommender, rec_kwargs,
                             RandomFromTopNSimulator, {"verbose": False})
-    rs.run(50_000, 30)
+    rs.run(10_000, 30)
     sims.append(rs)
 
 figure_file = "../../figures/ml_inv"
-multi_success_err(sims, save_file=figure_file + "_50k_success_err.png")
+multi_success_err(sims, save_file=figure_file + "_10k_success_err.png")

@@ -4,7 +4,12 @@ from pyrec.simulator import BaseSimulator
 
 
 class RandomSimulator(BaseSimulator):
+    def __init__(self, *args, seed=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.seed = seed
+
     def select_item(self, user):
+        np.random.seed(self.seed)
         random_test_i = np.random.randint(len(self.data.test_data.items))
         i = self.data.test_data.items[random_test_i]
         item = self.data.unique_values.items[i]
@@ -12,17 +17,19 @@ class RandomSimulator(BaseSimulator):
         return item, rating
 
     def select_user(self):
+        np.random.seed(self.seed)
         random_test_u = np.random.randint(len(self.data.test_data.users))
         u = self.data.test_data.users[random_test_u]
         return self.data.unique_values.users[u]
 
 
 class RandomFromTopNSimulator(RandomSimulator):
-    def __init__(self, name, data, rec, inv, verbose=True, n=5):
-        super().__init__(name, data, rec, inv, verbose=verbose)
+    def __init__(self, *args, n=5, **kwargs):
+        super().__init__(*args, **kwargs)
         self.n = n
 
     def select_item(self, user):
+        np.random.seed(self.seed)
         items, ratings = self.top_n(user, self.n)
         random_index = np.random.randint(self.n)
         return items[random_index], ratings[random_index]

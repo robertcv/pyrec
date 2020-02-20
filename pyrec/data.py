@@ -19,8 +19,9 @@ class UIRData:
     def __init__(self,
                  users: np.ndarray, items: np.ndarray, ratings: np.ndarray,
                  auto_r=False, auto_prep=True, auto_s=True, auto_ptrain=True,
-                 auto_ptest=True):
+                 auto_ptest=True, seed=None):
 
+        self.seed = seed
         self.raw_data = uir_type(users=np.array(users),
                                  items=np.array(items),
                                  ratings=np.array(ratings, dtype=np.float))
@@ -158,6 +159,7 @@ class UIRData:
 
         indexes = np.arange(self.uir_n)
         if not keep_order:
+            np.random.seed(self.seed)
             np.random.shuffle(indexes)
 
         train_index, validation_index, test_indexes = \

@@ -10,7 +10,7 @@ from pyrec.data import UIRData
 class MatrixFactorization(BaseRecommender):
 
     def __init__(self, k=20, max_iteration=50, batch_size=10000,
-                 alpha=0.001, mi=0.0001, verbose=True):
+                 alpha=0.001, mi=0.0001, verbose=True, seed=None):
         super().__init__()
 
         self.k = k
@@ -19,6 +19,7 @@ class MatrixFactorization(BaseRecommender):
         self.alpha = alpha
         self.mi = mi
         self.verbose = verbose
+        self.seed = seed
 
         self.P = None  # type: Optional[np.ndarray]
         self.Q = None  # type: Optional[np.ndarray]
@@ -31,6 +32,7 @@ class MatrixFactorization(BaseRecommender):
 
     def fit(self, data: UIRData):
         super().fit(data)
+        np.random.seed(self.seed)
 
         train_u = data.train_data.users
         train_i = data.train_data.items
@@ -122,8 +124,6 @@ class MatrixFactorization(BaseRecommender):
 
 
 if __name__ == '__main__':
-    np.random.seed(0)
-
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
 

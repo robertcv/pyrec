@@ -147,8 +147,6 @@ class TestSimulator(BaseSimulator):
 if __name__ == '__main__':
     from pyrec.recommender import MatrixFactorization
 
-    np.random.seed(0)
-
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
     inv = Inventory(uir_data)

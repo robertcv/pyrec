@@ -9,8 +9,6 @@ from pyrec.simulator import RandomFromTopNSimulator, \
 from pyrec.parallel import MultiSimulator
 
 
-np.random.seed(0)
-
 # read data from file
 print("load data")
 RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"

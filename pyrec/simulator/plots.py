@@ -180,19 +180,11 @@ def multi_success_err(simulations: List['RepeatedSimulation'], save_file=None):
         sold_e.append(np.std(s.sim_data["sold_items"]))
         label.append(s.name[:6])
 
-    print(rmse)
-    print(rmse_e)
-    print(sold)
-    print(sold_e)
-
     fig, ax = plt.subplots()
-    ax.scatter(rmse, sold)
     ax.errorbar(rmse, sold, xerr=rmse_e, yerr=sold_e, fmt='none')
 
-    rmse_padding = min(rmse) * 0.01
-    sold_padding = min(sold) * 0.01
     for i, txt in enumerate(label):
-        ax.annotate(txt, (rmse[i] + rmse_padding, sold[i] + sold_padding))
+        ax.annotate(txt, (rmse[i], sold[i]))
 
     ax.set_xlabel('RMSE')
     ax.set_ylabel('Items sold [%]')
@@ -209,8 +201,6 @@ if __name__ == '__main__':
     from pyrec.inventory import Inventory
     from pyrec.recommender import MatrixFactorization
     from pyrec.simulator import TestSimulator
-
-    np.random.seed(0)
 
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)

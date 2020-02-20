@@ -60,8 +60,6 @@ class RepeatedSimulation:
             "rmse": [sim.sim_data["rmse"] for sim in sims],
         }
 
-        return deepcopy(self.sim_data)
-
 
 if __name__ == '__main__':
     from pyrec.recommender import MatrixFactorization, WeightedRecommender
