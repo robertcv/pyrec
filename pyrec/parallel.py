@@ -12,6 +12,11 @@ def divide_chunks(l, n):
         yield l[i:i + n]
 
 
+def run_sim(i: int, sim: BaseSimulator, n: int, q: Queue):
+    sim_data = sim.run(n)
+    q.put((i, sim_data))
+
+
 class MultiSimulator:
     def __init__(self, n=1000):
         self.sims = []
@@ -27,7 +32,7 @@ class MultiSimulator:
             jobs = []
             q = Manager().Queue()
             for i in chunk:
-                p = Process(target=self.__run_sim,
+                p = Process(target=run_sim,
                             args=(i, self.sims[i], self.n, q))
                 jobs.append(p)
                 p.start()
@@ -38,12 +43,11 @@ class MultiSimulator:
             while not q.empty():
                 i, sim_data = q.get()
                 self.sims[i].sim_data = sim_data
-                self.sims[i].name += f" (RMSE={self.sims[i].sim_data['rmse']:.2f})"
 
-    @staticmethod
-    def __run_sim(i: int, sim: BaseSimulator, n: int, q: Queue):
-        sim_data = sim.run(n)
-        q.put((i, sim_data))
+
+def fit_rec(rec: BaseRecommender, data: UIRData, dump_file: str):
+    rec.fit(data)
+    rec.save(dump_file)
 
 
 class MultiRecommender:
@@ -66,7 +70,7 @@ class MultiRecommender:
             dumps = []
             for i in chunk:
                 dump_file = os.path.join(self.dump_dir, f"dump_{i}.npz")
-                p = Process(target=self.__fit_rec,
+                p = Process(target=fit_rec,
                             args=(self.recs[i], self.data[i], dump_file))
                 jobs.append(p)
                 dumps.append((i, dump_file))
@@ -78,11 +82,6 @@ class MultiRecommender:
             for i, df in dumps:
                 self.recs[i].load(df)
                 self.recs[i].data = self.data[i]
-
-    @staticmethod
-    def __fit_rec(rec: BaseRecommender, data: UIRData, dump_file: str):
-        rec.fit(data)
-        rec.save(dump_file)
 
 
 if __name__ == '__main__':
