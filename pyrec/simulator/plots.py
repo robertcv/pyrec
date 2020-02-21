@@ -178,6 +178,30 @@ def multi_success(simulations: List['BaseSimulator'], save_file=None):
         plt.show()
 
 
+def multi_success_stops(simulations: List['BaseSimulator'], stops: List[int],
+                        save_file=None):
+    fig, ax = plt.subplots()
+
+    for sim in simulations:
+        rmse = []
+        sold = []
+        for stop in stops:
+            rmse.append(calc_rmse(sim.sim_data.true_r[:stop],
+                                  sim.sim_data.pred_r[:stop]))
+            sold.append(sim.sim_data.sold_i[stop - 1])
+        ax.plot(rmse, sold, label=sim.name)
+
+    ax.legend()
+    ax.set_xlabel('RMSE')
+    ax.set_ylabel('Items sold [%]')
+    ax.set_title(f'Success of RSs')
+
+    if save_file is not None:
+        fig.savefig(save_file)
+    else:
+        plt.show()
+
+
 def multi_success_err(simulations: List['RepeatedSimulation'], save_file=None):
     rmse, rmse_e, sold, sold_e, label = [], [], [], [], []
 
