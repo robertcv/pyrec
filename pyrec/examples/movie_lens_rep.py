@@ -10,18 +10,18 @@ uir_data = UIRData.from_csv(RATINGS_FILE)
 inv = Inventory(uir_data)
 
 rec_kwargs = {"inv": None, "verbose": False,
-              "rec": MatrixFactorization, "rec_kwargs": {"max_iteration": 200,
+              "rec": MatrixFactorization, "rec_kwargs": {"max_iteration": 10,
                                                          "batch_size": 100}}
 
 sims = []
-alphas = [0, 0.7, 0.8, 0.85, 0.9, 0.95, 1]
+alphas = [0, 0.7, 1]
 for a in alphas:
     rec_kwargs["alpha"] = a
     rs = RepeatedSimulation(f"a={a}", uir_data, inv,
                             WeightedRecommender, rec_kwargs,
                             RandomFromTopNSimulator, {"verbose": False})
-    rs.run(10_000, 30)
+    rs.run(10_000, 3)
     sims.append(rs)
 
 figure_file = "../../figures/ml_inv"
-multi_success_err(sims, save_file=figure_file + "_10k_success_err.png")
+multi_success_err(sims)

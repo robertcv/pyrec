@@ -1,10 +1,18 @@
 from copy import deepcopy
+from typing import NamedTuple, Optional
 
 import numpy as np
 
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
 from pyrec.recommender import BaseRecommender
+
+
+sim_data = NamedTuple("sim_data", [("empty_i", np.ndarray),
+                                   ("sold_i", np.ndarray),
+                                   ("not_sold_i", np.ndarray),
+                                   ("true_r", np.ndarray),
+                                   ("pred_r", np.ndarray)])
 
 
 class BaseSimulator:
@@ -18,7 +26,7 @@ class BaseSimulator:
         self.inv = inv
         self.verbose = verbose
 
-        self.sim_data = {}
+        self.sim_data = None  # type: Optional[sim_data]
 
     def select_item(self, user):
         """Return selected item and it's rating."""
@@ -51,11 +59,10 @@ class BaseSimulator:
                 print(f"{self.name}: {int(per * 100)}%")
 
     def run(self, n=1000):
-        ratings_diff = []
         empty_items = []
         sold_items = [0]
         not_sold_items = [0]
-        test_ratings = []
+        true_ratings = []
         predicted_ratings = []
 
         _n = n // 10
@@ -69,10 +76,9 @@ class BaseSimulator:
 
             predicted_ratings.append(r)
             if user in self.test_ratings and item in self.test_ratings[user]:
-                test_ratings.append(self.test_ratings[user][item])
-                ratings_diff.append((r - self.test_ratings[user][item]) ** 2)
+                true_ratings.append(self.test_ratings[user][item])
             else:
-                test_ratings.append(np.nan)
+                true_ratings.append(np.nan)
 
             self.user_bought_item(user, item)
 
@@ -90,25 +96,12 @@ class BaseSimulator:
 
         self._print_verbose(1)
 
-        try:
-            rmse = np.sqrt(sum(ratings_diff) / len(ratings_diff))
-        except ZeroDivisionError:
-            rmse = self.data.raw_data.ratings.max() - \
-                   self.data.raw_data.ratings.min()
-
-        self.sim_data = {
-            "empty_items": empty_items,
-            "sold_items": sold_items[1:],
-            "test_ratings": test_ratings,
-            "predicted_ratings": predicted_ratings,
-            "not_sold_items": not_sold_items[1:],
-            "rmse": rmse,
-            "rmse_number": len(ratings_diff),
-        }
+        self.sim_data = sim_data(empty_i=np.array(empty_items),
+                                 sold_i=np.array(sold_items[1:]),
+                                 not_sold_i=np.array(not_sold_items[1:]),
+                                 true_r=np.array(true_ratings),
+                                 pred_r=np.array(predicted_ratings))
         return deepcopy(self.sim_data)
-
-    def rmse(self):
-        print(f"{self.name}: {self.sim_data['rmse']:.2f} for {self.sim_data['rmse_number']} ratings")
 
 
 class TestSimulator(BaseSimulator):

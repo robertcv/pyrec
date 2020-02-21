@@ -7,12 +7,17 @@ import matplotlib.patches as mpatches
 from matplotlib.cbook import violin_stats
 import matplotlib.mlab as mlab
 
+from pyrec.inventory import Inventory
 from pyrec.simulator import BaseSimulator, RepeatedSimulation
 
 
+def get_file_name(data_name, inv: Inventory, graph_name):
+    return "_".join([data_name, inv.name, "{}", "{}", graph_name, ".png"])
+
+
 def plot_items(sim: BaseSimulator, save_file=None):
-    empty_items = np.array(sim.sim_data["empty_items"])
-    sold_items = np.array(sim.sim_data["sold_items"])
+    empty_items = np.array(sim.sim_data.empty_i)
+    sold_items = np.array(sim.sim_data.sold_i)
 
     fig, ax = plt.subplots()
     ax.plot(empty_items, label="empty items")
@@ -29,8 +34,8 @@ def plot_items(sim: BaseSimulator, save_file=None):
 
 
 def plot_ratings(sim: BaseSimulator, save_file=None, mean_size=50):
-    test_ratings = np.array(sim.sim_data["test_ratings"])
-    predicted_ratings = np.array(sim.sim_data["predicted_ratings"])
+    test_ratings = np.array(sim.sim_data.true_r)
+    predicted_ratings = np.array(sim.sim_data.pred_r)
 
     if mean_size > 0:
         b = np.ones(mean_size) / mean_size
@@ -106,11 +111,11 @@ def _violin_plot(ax, data1, label1, data2, label2, n):
 
 
 def plot_ratings_violin(sim: BaseSimulator, save_file=None, n=10):
-    test_ratings = np.array(sim.sim_data["test_ratings"])
-    predicted_ratings = np.array(sim.sim_data["predicted_ratings"])
+    test_ratings = np.array(sim.sim_data.true_r)
+    predicted_ratings = np.array(sim.sim_data.pred_r)
 
     fig, ax = plt.subplots()
-    _violin_plot(ax, test_ratings, "test ratings",
+    _violin_plot(ax, test_ratings, "true ratings",
                  predicted_ratings, "predict ratings", n)
 
     ax.set_ylabel('rating')
@@ -128,12 +133,12 @@ def plot_ratings_violin(sim: BaseSimulator, save_file=None, n=10):
         plt.show()
 
 
-def multi_plot(simulations: List['BaseSimulator'], data="empty_items",
+def multi_plot(simulations: List['BaseSimulator'], data="empty_i",
                save_file=None):
     fig, ax = plt.subplots()
 
     for sim in simulations:
-        ax.plot(sim.sim_data[data], label=sim.name)
+        ax.plot(getattr(sim.sim_data, data), label=sim.name)
 
     ax.legend()
     ax.set_xlabel('iteration')
@@ -145,16 +150,21 @@ def multi_plot(simulations: List['BaseSimulator'], data="empty_items",
         plt.show()
 
 
+def calc_rmse(true_r: np.ndarray, pred_r: np.ndarray, axis=0):
+    return np.sqrt(np.nanmean((true_r - pred_r) ** 2, axis=axis))
+
+
 def multi_success(simulations: List['BaseSimulator'], save_file=None):
-    rmse = [sim.sim_data["rmse"] for sim in simulations]
-    sold = [sim.sim_data["sold_items"][-1] for sim in simulations]
-    label = [sim.name[:6] for sim in simulations]
+    rmse = [calc_rmse(sim.sim_data.true_r, sim.sim_data.pred_r)
+            for sim in simulations]
+    sold = [sim.sim_data.sold_i[-1] for sim in simulations]
+    label = [sim.name for sim in simulations]
 
     fig, ax = plt.subplots()
     ax.scatter(rmse, sold)
 
-    rmse_padding = min(rmse) * 0.01
-    sold_padding = min(sold) * 0.01
+    rmse_padding = (max(rmse) - min(rmse)) * 0.01
+    sold_padding = (max(sold) - min(sold)) * 0.01
     for i, txt in enumerate(label):
         ax.annotate(txt, (rmse[i] + rmse_padding, sold[i] + sold_padding))
 
@@ -169,16 +179,15 @@ def multi_success(simulations: List['BaseSimulator'], save_file=None):
 
 
 def multi_success_err(simulations: List['RepeatedSimulation'], save_file=None):
-    rmse, sold = [], []
-    rmse_e, sold_e = [], []
-    label = []
+    rmse, rmse_e, sold, sold_e, label = [], [], [], [], []
 
     for s in simulations:
-        rmse.append(np.mean(s.sim_data["rmse"]))
-        rmse_e.append(np.std(s.sim_data["rmse"]))
-        sold.append(np.mean(s.sim_data["sold_items"]))
-        sold_e.append(np.std(s.sim_data["sold_items"]))
-        label.append(s.name[:6])
+        _rmse = calc_rmse(s.sim_data.true_r, s.sim_data.pred_r, axis=1)
+        rmse.append(np.mean(_rmse))
+        rmse_e.append(np.std(_rmse))
+        sold.append(np.mean(s.sim_data.sold_i))
+        sold_e.append(np.std(s.sim_data.sold_i))
+        label.append(s.name)
 
     fig, ax = plt.subplots()
     ax.errorbar(rmse, sold, xerr=rmse_e, yerr=sold_e, fmt='none')

@@ -1,9 +1,11 @@
-from copy import deepcopy
+from typing import Optional
+
+import numpy as np
 
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
 from pyrec.recommender import BaseRecommender
-from pyrec.simulator import BaseSimulator
+from pyrec.simulator import BaseSimulator, sim_data
 from pyrec.parallel import MultiSimulator, MultiRecommender
 
 
@@ -19,7 +21,7 @@ class RepeatedSimulation:
         self.sim = sim
         self.sim_kwargs = sim_kwargs
 
-        self.sim_data = {}
+        self.sim_data = None  # type: Optional[sim_data]
 
     def run(self, n, rep):
         print(f"Start repeated Simulation {self.name}")
@@ -53,12 +55,13 @@ class RepeatedSimulation:
         ms.set_sims(sims)
         ms.run_parallel()
 
-        self.sim_data = {
-            "empty_items": [sim.sim_data["empty_items"][-1] for sim in sims],
-            "sold_items": [sim.sim_data["sold_items"][-1] for sim in sims],
-            "not_sold_items": [sim.sim_data["not_sold_items"][-1] for sim in sims],
-            "rmse": [sim.sim_data["rmse"] for sim in sims],
-        }
+        self.sim_data = sim_data(
+            empty_i=np.vstack([sim.sim_data.empty_i for sim in sims]),
+            sold_i=np.vstack([sim.sim_data.sold_i for sim in sims]),
+            not_sold_i=np.vstack([sim.sim_data.not_sold_i for sim in sims]),
+            true_r=np.vstack([sim.sim_data.true_r for sim in sims]),
+            pred_r=np.vstack([sim.sim_data.pred_r for sim in sims])
+        )
 
 
 if __name__ == '__main__':
@@ -70,9 +73,10 @@ if __name__ == '__main__':
     inv = Inventory(uir_data)
     rec_kwargs = {"alpha": 0.5, "inv": None, "verbose": False,
                   "rec": MatrixFactorization,
-                  "rec_kwargs": {}}
+                  "rec_kwargs": {"max_iteration": 10}}
 
     rs = RepeatedSimulation("test", uir_data, inv,
                             WeightedRecommender, rec_kwargs,
                             RandomFromTopNSimulator, {"verbose": False})
     rs.run(1_000, 5)
+    print(rs.sim_data)

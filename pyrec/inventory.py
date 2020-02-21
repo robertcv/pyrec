@@ -18,6 +18,7 @@ class Inventory:
         self.item2i = {item: i for i, item in enumerate(self.items)}
         self.counts = unique_counts
         self.start_size = np.sum(self.counts)
+        self.name = "inv"
 
     def __repr__(self):
         return f"Inv ({self.current_count()} all, {len(self.counts)} items)"
@@ -71,7 +72,7 @@ class UniformInventory(Inventory):
         n = int(self.start_size / len(self.items))
         self.counts = np.ones(len(self.items), dtype=int) * n
         self.start_size = len(self.items) * n
-        print(f"All items in inventory: {self.start_size}")
+        self.name = "uinv"
 
 
 if __name__ == '__main__':

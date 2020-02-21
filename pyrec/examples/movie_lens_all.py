@@ -31,4 +31,4 @@ print("plot data")
 figure_file = "../../figures/ml"
 figure_file += "_inv"
 
-multi_success(sims, save_file=figure_file + "_10k_success.png")
+multi_success(sims)

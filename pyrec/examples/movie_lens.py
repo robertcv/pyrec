@@ -1,5 +1,3 @@
-import numpy as np
-
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory, UniformInventory
 from pyrec.recommender import MatrixFactorization, MostInInvRecommender, \
@@ -66,11 +64,11 @@ plot_ratings_violin(sim5, save_file=figure_file + "_rviola_alpha_75.png")
 plot_ratings_violin(sim7, save_file=figure_file + "_rviola_mii.png")
 
 multi_plot([sim1, sim3, sim5, sim7],
-           data="sold_items",
+           data="sold_i",
            save_file=figure_file + "_sold.png")
 multi_plot([sim1, sim3, sim5, sim7],
-           data="empty_items",
+           data="empty_i",
            save_file=figure_file + "_empty.png")
 multi_plot([sim1, sim3, sim5, sim7],
-           data="not_sold_items",
+           data="not_sold_i",
            save_file=figure_file + "_not_sold.png")
