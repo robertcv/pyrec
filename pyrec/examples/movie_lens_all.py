@@ -21,7 +21,7 @@ for a in alphas:
 
 # run simulations
 print("run simulations")
-ms = MultiSimulator(20_000)
+ms = MultiSimulator(50_000)
 ms.set_sims(sims)
 ms.run_parallel()
 
@@ -31,5 +31,5 @@ print("plot data")
 figure_file = "../../figures/ml"
 figure_file += "_inv"
 
-multi_success_stops(sims, [5_000, 10_000, 15_000, 20_000],
-                    save_file=figure_file + "_success.png")
+multi_success_stops(sims, list(range(1_000, 50_001, 500)),
+                    save_file=figure_file + "_50k_success_step.png")

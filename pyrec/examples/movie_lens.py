@@ -45,7 +45,7 @@ sim7 = RandomFromTopNSimulator("most in inv", uir_data, miir, _inv)
 
 # run simulations
 print("run simulations")
-ms = MultiSimulator(100_000)
+ms = MultiSimulator(50_000)
 ms.set_sims([sim1, sim3, sim5, sim7])
 ms.run_parallel()
 
@@ -63,12 +63,12 @@ plot_ratings_violin(sim3, save_file=figure_file + "_rviola_alpha_85.png")
 plot_ratings_violin(sim5, save_file=figure_file + "_rviola_alpha_75.png")
 plot_ratings_violin(sim7, save_file=figure_file + "_rviola_mii.png")
 
-multi_plot([sim1, sim3, sim5, sim7],
-           data="sold_i",
-           save_file=figure_file + "_sold.png")
-multi_plot([sim1, sim3, sim5, sim7],
-           data="empty_i",
-           save_file=figure_file + "_empty.png")
-multi_plot([sim1, sim3, sim5, sim7],
-           data="not_sold_i",
-           save_file=figure_file + "_not_sold.png")
+# multi_plot([sim1, sim3, sim5, sim7],
+#            data="sold_i",
+#            save_file=figure_file + "_sold.png")
+# multi_plot([sim1, sim3, sim5, sim7],
+#            data="empty_i",
+#            save_file=figure_file + "_empty.png")
+# multi_plot([sim1, sim3, sim5, sim7],
+#            data="not_sold_i",
+#            save_file=figure_file + "_not_sold.png")

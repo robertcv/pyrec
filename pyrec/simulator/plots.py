@@ -110,22 +110,45 @@ def _violin_plot(ax, data1, label1, data2, label2, n):
     ])
 
 
+def _hist_plot(ax, data1, data2, n):
+    data1_size = [np.sum(~np.isnan(d)) for d in np.array_split(data1, n)]
+    data2_size = [np.sum(~np.isnan(d)) for d in np.array_split(data2, n)]
+
+    width = 0.35
+    alpha = 0.5
+    x = np.arange(1, n + 1)
+    ax.bar(x - width / 2, data1_size, width, alpha=alpha)
+    ax.bar(x + width / 2, data2_size, width, alpha=alpha)
+
+
 def plot_ratings_violin(sim: BaseSimulator, save_file=None, n=10):
     test_ratings = np.array(sim.sim_data.true_r)
     predicted_ratings = np.array(sim.sim_data.pred_r)
 
-    fig, ax = plt.subplots()
-    _violin_plot(ax, test_ratings, "true ratings",
+    fig, (ax0, ax1) = plt.subplots(nrows=2)
+    _violin_plot(ax0, test_ratings, "true ratings",
                  predicted_ratings, "predict ratings", n)
 
-    ax.set_ylabel('rating')
-    ax.set_xlabel('iteration')
+    _hist_plot(ax1, test_ratings, predicted_ratings, n)
+
+    ax0.set_ylabel('rating')
+    ax1.set_ylabel('number of ratings')
+    ax1.set_xlabel('iteration')
     n_sub = int(len(test_ratings) / n)
-    ax.set_xticks(np.arange(1, n + 1))
-    ax.set_xticklabels(map(str, np.arange(1, n + 1) * n_sub))
-    for label in ax.xaxis.get_ticklabels()[::2]:
+
+    ax0.set_xticks(np.arange(1, n + 1))
+    ax1.set_xticks(np.arange(1, n + 1))
+
+    ax1.set_xlim(*ax0.get_xlim())
+
+    ax0.set_xticklabels(map(str, np.arange(1, n + 1) * n_sub))
+    ax1.set_xticklabels(map(str, np.arange(1, n + 1) * n_sub))
+    for label in ax0.xaxis.get_ticklabels()[::2]:
         label.set_visible(False)
-    ax.set_title(f'Change of ratings in {sim.name} simulation')
+    for label in ax1.xaxis.get_ticklabels()[::2]:
+        label.set_visible(False)
+
+    ax0.set_title(f'Change of ratings in {sim.name} simulation')
 
     if save_file is not None:
         fig.savefig(save_file)
