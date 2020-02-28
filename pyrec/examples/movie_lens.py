@@ -1,7 +1,7 @@
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory, UniformInventory
 from pyrec.recommender import MatrixFactorization, MostInInvRecommender, \
-    WeightedRecommender
+    WeightedRecommender, MostInInvStaticRecommender
 from pyrec.simulator import RandomFromTopNSimulator, \
     plot_ratings_violin, multi_plot
 from pyrec.parallel import MultiSimulator
@@ -26,7 +26,7 @@ print("fit models")
 _inv = inv.copy()
 mf = MatrixFactorization.load_static("../../models/ml-small-mf")
 mf.data = uir_data
-sim1 = RandomFromTopNSimulator("best score", uir_data, mf, _inv)
+sim1 = RandomFromTopNSimulator("mf", uir_data, mf, _inv)
 
 _inv = inv.copy()
 wr = WeightedRecommender(0.85, _inv, mf, {})
@@ -41,12 +41,17 @@ sim5 = RandomFromTopNSimulator(f"alpha={wr.alpha}", uir_data, wr, _inv)
 _inv = inv.copy()
 miir = MostInInvRecommender(_inv)
 miir.fit(uir_data)
-sim7 = RandomFromTopNSimulator("most in inv", uir_data, miir, _inv)
+sim7 = RandomFromTopNSimulator("inv", uir_data, miir, _inv)
+
+_inv = inv.copy()
+miisr = MostInInvStaticRecommender(_inv)
+miisr.fit(uir_data)
+sim8 = RandomFromTopNSimulator("inv s", uir_data, miisr, _inv)
 
 # run simulations
 print("run simulations")
 ms = MultiSimulator(50_000)
-ms.set_sims([sim1, sim3, sim5, sim7])
+ms.set_sims([sim1, sim3, sim5, sim7, sim8])
 ms.run_parallel()
 
 # plot data
@@ -62,13 +67,14 @@ plot_ratings_violin(sim1, save_file=figure_file + "_rviola_mf.png")
 plot_ratings_violin(sim3, save_file=figure_file + "_rviola_alpha_85.png")
 plot_ratings_violin(sim5, save_file=figure_file + "_rviola_alpha_75.png")
 plot_ratings_violin(sim7, save_file=figure_file + "_rviola_mii.png")
+plot_ratings_violin(sim8, save_file=figure_file + "_rviola_miis.png")
 
-# multi_plot([sim1, sim3, sim5, sim7],
+# multi_plot([sim1, sim3, sim5, sim7, sim8],
 #            data="sold_i",
 #            save_file=figure_file + "_sold.png")
-# multi_plot([sim1, sim3, sim5, sim7],
+# multi_plot([sim1, sim3, sim5, sim7, sim8],
 #            data="empty_i",
 #            save_file=figure_file + "_empty.png")
-# multi_plot([sim1, sim3, sim5, sim7],
+# multi_plot([sim1, sim3, sim5, sim7, sim8],
 #            data="not_sold_i",
 #            save_file=figure_file + "_not_sold.png")

@@ -23,6 +23,24 @@ class MostInInvRecommender(BaseRecommender):
         return ratings
 
 
+class MostInInvStaticRecommender(BaseRecommender):
+    def __init__(self, inv: Inventory):
+        super().__init__()
+        self.inv = inv
+        self.item_pred = None
+
+    def fit(self, data):
+        super().fit(data)
+        max_r = self.data.train_data.ratings.max()
+        self.item_pred = self.inv.counts / self.inv.counts.max() * max_r
+
+    def _predict(self, _: int, item_index: int) -> float:
+        return self.item_pred[item_index]
+
+    def _predict_user(self, _: int) -> np.ndarray:
+        return self.item_pred
+
+
 class WeightedRecommender(MostInInvRecommender):
     """
     r = alpha * rec_r + (1 - alpha) * inv_r
