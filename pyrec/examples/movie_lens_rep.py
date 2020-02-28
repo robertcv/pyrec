@@ -2,16 +2,19 @@ from pyrec.data import UIRData
 from pyrec.inventory import Inventory
 from pyrec.simulator import RandomFromTopNSimulator, RepeatedSimulation, \
     multi_success_err
-from pyrec.recommender import MatrixFactorization, WeightedRecommender
+from pyrec.recommender import MatrixFactorization, MostInInvRecommender, \
+    WeightedRecommender
 
 
 RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
 uir_data = UIRData.from_csv(RATINGS_FILE)
 inv = Inventory(uir_data)
 
-rec_kwargs = {"inv": None, "verbose": False,
-              "rec": MatrixFactorization, "rec_kwargs": {"max_iteration": 200,
-                                                         "batch_size": 100}}
+rec_kwargs = {"verbose": False,
+              "rec1": MatrixFactorization,
+              "rec1_kwargs": {"max_iteration": 200, "batch_size": 100},
+              "rec2": MostInInvRecommender,
+              "rec2_kwargs": {"inv": None}}
 
 sims = []
 alphas = [0, 0.5, 0.7, 0.8, 0.9, 0.95, 1]

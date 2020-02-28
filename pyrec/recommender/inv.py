@@ -5,7 +5,11 @@ from pyrec.inventory import Inventory
 
 
 class MostInInvRecommender(BaseRecommender):
-    def __init__(self, inv: Inventory):
+    """
+    Always assign the highest rating to item that we have the
+    most of in inventory. Changes when inventory changes.
+    """
+    def __init__(self, inv: Inventory, **kwargs):
         super().__init__()
         self.inv = inv
 
@@ -22,9 +26,27 @@ class MostInInvRecommender(BaseRecommender):
         ratings = ratings * self.data.train_data.ratings.max()
         return ratings
 
+    def save(self, file_name):
+        """
+        Inventory cannot by saved since this object must be the
+        same everywhere it's manipulated.
+        """
+        pass
+
+    def load(self, file_name):
+        """
+        Inventory cannot by loaded since this object must be the
+        same everywhere it's manipulated.
+        """
+        pass
+
 
 class MostInInvStaticRecommender(BaseRecommender):
-    def __init__(self, inv: Inventory):
+    """
+    Static version of MostInInvRecommender. Ratings are computed once and
+    are not updated when inventory changes.
+    """
+    def __init__(self, inv: Inventory, **kwargs):
         super().__init__()
         self.inv = inv
         self.item_pred = None
@@ -40,51 +62,16 @@ class MostInInvStaticRecommender(BaseRecommender):
     def _predict_user(self, _: int) -> np.ndarray:
         return self.item_pred
 
-
-class WeightedRecommender(MostInInvRecommender):
-    """
-    r = alpha * rec_r + (1 - alpha) * inv_r
-    """
-    def __init__(self, alpha, inv: Inventory, rec: BaseRecommender,
-                 rec_kwargs: dict, verbose=True):
-        super().__init__(inv)
-        self.rec = rec
-        self.alpha = alpha
-        self.rec_kwargs = rec_kwargs
-        self.verbose = verbose
-        self.rec_kwargs["verbose"] = self.verbose
-
-    def fit(self, data):
-        super().fit(data)
-        if isinstance(self.rec, BaseRecommender):
-            # rec is already an instantiated recommender
-            return
-
-        self.rec = self.rec(**self.rec_kwargs)
-        self.rec.fit(data)
-
-    def __setattr__(self, name, value):
-        if name == "data" and "rec" in self.__dict__ and isinstance(self.rec, BaseRecommender):
-            self.rec.data = value
-        self.__dict__[name] = value
-
-    def _predict(self, user_index: int, item_index: int) -> float:
-        r = self.alpha * self.rec._predict(user_index, item_index) + \
-            (1 - self.alpha) * super()._predict(user_index, item_index)
-        return r
-
-    def _predict_user(self, user_index: int) -> np.ndarray:
-        ratings = self.alpha * self.rec._predict_user(user_index) + \
-            (1 - self.alpha) * super()._predict_user(user_index)
-        return ratings
-
     def save(self, file_name):
-        self.rec.save(file_name)
+        if not file_name.endswith(".npz"):
+            file_name += ".npz"
+        np.savez(file_name, item_pred=self.item_pred)
 
     def load(self, file_name):
-        if not isinstance(self.rec, BaseRecommender):
-            self.rec = self.rec(**self.rec_kwargs)
-        self.rec.load(file_name)
+        if not file_name.endswith(".npz"):
+            file_name += ".npz"
+        data = np.load(file_name)
+        self.item_pred = data["item_pred"]
 
 
 if __name__ == '__main__':

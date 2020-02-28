@@ -69,7 +69,7 @@ class MultiRecommender:
             jobs = []
             dumps = []
             for i in chunk:
-                dump_file = os.path.join(self.dump_dir, f"dump_{i}.npz")
+                dump_file = os.path.join(self.dump_dir, f"dump_{i}")
                 p = Process(target=fit_rec,
                             args=(self.recs[i], self.data[i], dump_file))
                 jobs.append(p)

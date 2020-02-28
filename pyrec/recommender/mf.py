@@ -10,7 +10,7 @@ from pyrec.data import UIRData
 class MatrixFactorization(BaseRecommender):
 
     def __init__(self, k=20, max_iteration=50, batch_size=10000,
-                 alpha=0.001, mi=0.0001, verbose=True, seed=None):
+                 alpha=0.001, mi=0.0001, verbose=True, seed=None, **kwargs):
         super().__init__()
 
         self.k = k

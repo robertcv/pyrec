@@ -6,8 +6,7 @@ from pyrec.data import UIRData
 
 
 class BaseRecommender:
-
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.data = None  # type: Optional[UIRData]
 
     def fit(self, data: UIRData):

@@ -24,19 +24,19 @@ mf.data = uir_data
 sim1 = TestSimulator("best score", uir_data, mf, _inv)
 
 _inv = inv.copy()
-wr = WeightedRecommender(0.85, _inv, mf, {})
+miir = MostInInvRecommender(_inv)
+miir.fit(uir_data)
+sim7 = TestSimulator("most in inv", uir_data, miir, _inv)
+
+_inv = inv.copy()
+wr = WeightedRecommender(0.85, mf, {}, MostInInvRecommender, {"inv": _inv})
 wr.fit(uir_data)
 sim3 = TestSimulator(f"alpha={wr.alpha}", uir_data, wr, _inv)
 
 _inv = inv.copy()
-wr = WeightedRecommender(0.75, _inv, mf, {})
+wr = WeightedRecommender(0.75, mf, {}, MostInInvRecommender, {"inv": _inv})
 wr.fit(uir_data)
 sim5 = TestSimulator(f"alpha={wr.alpha}", uir_data, wr, _inv)
-
-_inv = inv.copy()
-miir = MostInInvRecommender(_inv)
-miir.fit(uir_data)
-sim7 = TestSimulator("most in inv", uir_data, miir, _inv)
 
 # run simulations
 print("run simulations")
