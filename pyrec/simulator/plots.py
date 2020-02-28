@@ -125,7 +125,9 @@ def plot_ratings_violin(sim: BaseSimulator, save_file=None, n=10):
     test_ratings = np.array(sim.sim_data.true_r)
     predicted_ratings = np.array(sim.sim_data.pred_r)
 
-    fig, (ax0, ax1) = plt.subplots(nrows=2)
+    fig, (ax0, ax1) = plt.subplots(nrows=2,
+                                   gridspec_kw={'height_ratios': [2, 1]},
+                                   figsize=(8, 8))
     _violin_plot(ax0, test_ratings, "true ratings",
                  predicted_ratings, "predict ratings", n)
 
@@ -264,6 +266,6 @@ if __name__ == '__main__':
     mf = MatrixFactorization.load_static("../../models/ml-small-mf")
     mf.data = uir_data
     sim = TestSimulator("best score", uir_data, mf, inv)
-    sim.run(10_000)
+    sim.run(1_000)
 
     plot_ratings_violin(sim)
