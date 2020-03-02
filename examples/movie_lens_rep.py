@@ -1,9 +1,11 @@
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
-from pyrec.simulator import RandomFromTopNSimulator, RepeatedSimulation, \
-    multi_success_err
-from pyrec.recommender import MatrixFactorization, MostInInvRecommender, \
-    WeightedRecommender
+from pyrec.sims.rand import RandomFromTopNSimulator
+from pyrec.sims.repeated import RepeatedSimulation
+from pyrec.plots import multi_success_err
+from pyrec.recs.mf import MatrixFactorization
+from pyrec.recs.inv import MostInInvRecommender
+from pyrec.recs.weighted import WeightedRecommender
 
 
 RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"

@@ -1,8 +1,10 @@
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
-from pyrec.recommender import MatrixFactorization, MostInInvRecommender, \
-    WeightedRecommender
-from pyrec.simulator import TestSimulator, plot_ratings_violin, multi_plot
+from pyrec.recs.mf import MatrixFactorization
+from pyrec.recs.inv import MostInInvRecommender
+from pyrec.recs.weighted import WeightedRecommender
+from pyrec.sims.base import TestSimulator
+from pyrec.plots import plot_ratings_violin, multi_plot
 from pyrec.parallel import MultiSimulator
 
 

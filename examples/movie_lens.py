@@ -1,15 +1,16 @@
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory, UniformInventory
-from pyrec.recommender import MatrixFactorization, MostInInvRecommender, \
-    WeightedRecommender, MostInInvStaticRecommender
-from pyrec.simulator import RandomFromTopNSimulator, \
-    plot_ratings_violin, multi_plot
+from pyrec.recs.mf import MatrixFactorization
+from pyrec.recs.inv import MostInInvRecommender, MostInInvStaticRecommender
+from pyrec.recs.weighted import WeightedRecommender
+from pyrec.sims.rand import RandomFromTopNSimulator
+from pyrec.plots import plot_ratings_violin, multi_plot
 from pyrec.parallel import MultiSimulator
 
 
 # read data from file
 print("load data")
-RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
+RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
 uir_data = UIRData.from_csv(RATINGS_FILE)
 print(uir_data)
 
@@ -24,7 +25,7 @@ print(inv)
 # fit models and create sims
 print("fit models")
 _inv = inv.copy()
-mf = MatrixFactorization.load_static("../../models/ml-small-mf")
+mf = MatrixFactorization.load_static("../models/ml-small-mf")
 mf.data = uir_data
 sim1 = RandomFromTopNSimulator("mf", uir_data, mf, _inv)
 
@@ -57,7 +58,7 @@ ms.run_parallel()
 # plot data
 print("plot data")
 
-figure_file = "../../figures/ml"
+figure_file = "../figures/ml"
 if UNIFORM:
     figure_file += "_uinv"
 else:
