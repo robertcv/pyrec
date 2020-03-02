@@ -8,7 +8,8 @@ from matplotlib.cbook import violin_stats
 import matplotlib.mlab as mlab
 
 from pyrec.inventory import Inventory
-from pyrec.simulator import BaseSimulator, RepeatedSimulation
+from pyrec.sims.base import BaseSimulator
+from pyrec.sims.repeated import RepeatedSimulation
 
 
 def get_file_name(data_name, inv: Inventory, graph_name):
@@ -214,7 +215,7 @@ def multi_success_stops(simulations: List['BaseSimulator'], stops: List[int],
             rmse.append(calc_rmse(sim.sim_data.true_r[:stop],
                                   sim.sim_data.pred_r[:stop]))
             sold.append(sim.sim_data.sold_i[stop - 1])
-        ax.plot(rmse, sold, label=sim.name)
+        ax.plot(rmse, sold, '.-', label=sim.name, linewidth=0.5)
 
     ax.legend()
     ax.set_xlabel('RMSE')
@@ -257,8 +258,8 @@ def multi_success_err(simulations: List['RepeatedSimulation'], save_file=None):
 if __name__ == '__main__':
     from pyrec.data import UIRData
     from pyrec.inventory import Inventory
-    from pyrec.recommender import MatrixFactorization
-    from pyrec.simulator import TestSimulator
+    from pyrec.recs.mf import MatrixFactorization
+    from pyrec.sims.base import TestSimulator
 
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)

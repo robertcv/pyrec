@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 
-from pyrec.recommender import BaseRecommender
+from pyrec.recs.base import BaseRecommender
 from pyrec.data import UIRData
 
 

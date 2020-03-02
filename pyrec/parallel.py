@@ -2,8 +2,8 @@ import os
 from typing import List
 from multiprocessing import Process, Manager, Queue, cpu_count
 
-from pyrec.recommender import BaseRecommender
-from pyrec.simulator import BaseSimulator
+from pyrec.recs.base import BaseRecommender
+from pyrec.sims.base import BaseSimulator
 from pyrec.data import UIRData
 
 
@@ -85,7 +85,7 @@ class MultiRecommender:
 
 
 if __name__ == '__main__':
-    from pyrec.recommender import MatrixFactorization
+    from pyrec.recs.mf import MatrixFactorization
 
     RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)

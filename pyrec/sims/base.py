@@ -5,7 +5,7 @@ import numpy as np
 
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
-from pyrec.recommender import BaseRecommender
+from pyrec.recs.base import BaseRecommender
 
 
 sim_data = NamedTuple("sim_data", [("empty_i", np.ndarray),
@@ -138,7 +138,7 @@ class TestSimulator(BaseSimulator):
 
 
 if __name__ == '__main__':
-    from pyrec.recommender import MatrixFactorization
+    from pyrec.recs.mf import MatrixFactorization
 
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)

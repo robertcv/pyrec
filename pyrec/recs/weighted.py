@@ -1,6 +1,6 @@
 import numpy as np
 
-from pyrec.recommender import BaseRecommender
+from pyrec.recs.base import BaseRecommender
 
 
 class WeightedRecommender(BaseRecommender):

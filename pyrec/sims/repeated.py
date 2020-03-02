@@ -4,8 +4,8 @@ import numpy as np
 
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
-from pyrec.recommender import BaseRecommender
-from pyrec.simulator import BaseSimulator, sim_data
+from pyrec.recs.base import BaseRecommender
+from pyrec.sims.base import BaseSimulator, sim_data
 from pyrec.parallel import MultiSimulator, MultiRecommender
 
 
@@ -73,9 +73,10 @@ class RepeatedSimulation:
 
 
 if __name__ == '__main__':
-    from pyrec.recommender import MatrixFactorization, WeightedRecommender, \
-        MostInInvRecommender
-    from pyrec.simulator import RandomFromTopNSimulator
+    from pyrec.recs.mf import MatrixFactorization
+    from pyrec.recs.weighted import WeightedRecommender
+    from pyrec.recs.inv import MostInInvRecommender
+    from pyrec.sims.rand import RandomFromTopNSimulator
 
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)

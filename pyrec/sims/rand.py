@@ -1,6 +1,6 @@
 import numpy as np
 
-from pyrec.simulator import BaseSimulator
+from pyrec.sims.base import BaseSimulator
 
 
 class RandomSimulator(BaseSimulator):
@@ -60,9 +60,14 @@ class RandomFromTopNSimulator(RandomSimulator):
         return top_items, top_pred
 
 
+class BestSimulator(RandomFromTopNSimulator):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, n=1)
+
+
 if __name__ == '__main__':
     from pyrec.data import UIRData
-    from pyrec.recommender import MatrixFactorization
+    from pyrec.recs.mf import MatrixFactorization
     from pyrec.inventory import Inventory
 
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
@@ -71,5 +76,5 @@ if __name__ == '__main__':
     mf = MatrixFactorization.load_static("../../models/ml-small-mf")
     mf.data = uir_data
     inv = Inventory(uir_data)
-    sim = RandomSimulator("rand", uir_data, mf, inv)
+    sim = BestSimulator("rand", uir_data, mf, inv)
     sim.run()

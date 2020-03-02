@@ -1,6 +1,6 @@
 import numpy as np
 
-from pyrec.recommender import BaseRecommender
+from pyrec.recs.base import BaseRecommender
 from pyrec.inventory import Inventory
 
 
@@ -76,7 +76,7 @@ class MostInInvStaticRecommender(BaseRecommender):
 
 if __name__ == '__main__':
     from pyrec.data import UIRData
-    from pyrec.recommender import MatrixFactorization
+    from pyrec.recs.mf import MatrixFactorization
 
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
