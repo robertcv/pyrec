@@ -65,14 +65,20 @@ class UserWantMatrixFactorization(MatrixFactorization):
         self.t_min = self.data.train_data.ratings.min()
         self.t_max = self.data.train_data.ratings.max()
 
+    def _trans(self, x):
+        return x * (self.t_max - self.t_min) + self.t_min
+
     def _predict(self, user_index, item_index):
-        return self._predict_user(user_index)[item_index]
+        user_r = self.full[user_index, item_index]
+        want = np.sum(self.full[:, item_index] > user_r)
+        not_want = 1 - want / self.data.n
+        return self._trans(not_want)
 
     def _predict_user(self, user_index):
         user_r = self.full[user_index, :]
         want = np.sum(self.full > user_r, axis=0)
-        not_want = 1 - want / want.max()
-        return not_want * (self.t_max - self.t_min) + self.t_min
+        not_want = 1 - want / self.data.n
+        return self._trans(not_want)
 
 
 if __name__ == '__main__':
@@ -83,4 +89,6 @@ if __name__ == '__main__':
     mf = UserWantMatrixFactorization(k=20, max_iteration=20,
                                      batch_size=100)
     mf.fit(uir_data)
+    mf.predict(uir_data.unique_values.users[0],
+               uir_data.unique_values.items[0])
     mf.predict_user(uir_data.unique_values.users[0])

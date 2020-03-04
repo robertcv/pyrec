@@ -33,6 +33,7 @@ class MatrixFactorization(BaseRecommender):
     def fit(self, data: UIRData):
         super().fit(data)
         np.random.seed(self.seed)
+        self._init_matrix()
 
         train_u = data.train_data.users
         train_i = data.train_data.items
@@ -44,12 +45,6 @@ class MatrixFactorization(BaseRecommender):
 
         train_len = len(train_u)
         train_select = np.arange(train_len)
-
-        self.P = np.random.normal(size=(data.n, self.k), scale=1/self.k)
-        self.Q = np.random.normal(size=(data.m, self.k), scale=1/self.k)
-
-        self.u_bayes = np.random.normal(size=(data.n,), scale=.1/self.k)
-        self.i_bayes = np.random.normal(size=(data.m,), scale=.1/self.k)
 
         n_batches = np.clip(int(train_len / self.batch_size), 1, train_len)
         self._print_verbose(f"Number of Batches: {n_batches}")
@@ -63,13 +58,9 @@ class MatrixFactorization(BaseRecommender):
 
             train_e = 0
             for batch_i in np.array_split(train_select, n_batches):
-                # update P and Q
-                u, i, r = train_u[batch_i], train_i[batch_i], train_r[batch_i]
-                e = r - self._pred_vec(u, i)
-                self.P[u, :] += self.alpha * (e[:, np.newaxis] * self.Q[i, :] - self.mi * self.P[u, :])
-                self.Q[i, :] += self.alpha * (e[:, np.newaxis] * self.P[u, :] - self.mi * self.Q[i, :])
-                self.u_bayes[u] += self.alpha * (e - self.mi * self.u_bayes[u])
-                self.i_bayes[i] += self.alpha * (e - self.mi * self.i_bayes[i])
+                e = self._update(train_u[batch_i],
+                                 train_i[batch_i],
+                                 train_r[batch_i])
                 train_e += np.sum(np.abs(e))
             train_e /= train_len
 
@@ -83,6 +74,21 @@ class MatrixFactorization(BaseRecommender):
                 break
             else:
                 last_e = validation_e
+
+    def _init_matrix(self):
+        self.P = np.random.normal(size=(self.data.n, self.k), scale=1/self.k)
+        self.Q = np.random.normal(size=(self.data.m, self.k), scale=1/self.k)
+        self.u_bayes = np.random.normal(size=(self.data.n,), scale=.1/self.k)
+        self.i_bayes = np.random.normal(size=(self.data.m,), scale=.1/self.k)
+
+    def _update(self, u, i, r):
+        # update P and Q
+        e = r - self._pred_vec(u, i)
+        self.P[u, :] += self.alpha * (e[:, np.newaxis] * self.Q[i, :] - self.mi * self.P[u, :])
+        self.Q[i, :] += self.alpha * (e[:, np.newaxis] * self.P[u, :] - self.mi * self.Q[i, :])
+        self.u_bayes[u] += self.alpha * (e - self.mi * self.u_bayes[u])
+        self.i_bayes[i] += self.alpha * (e - self.mi * self.i_bayes[i])
+        return e
 
     def _pred_vec(self, u, i):
         return np.sum(self.P[u, :] * self.Q[i, :], axis=1) \
@@ -123,11 +129,36 @@ class MatrixFactorization(BaseRecommender):
         return mf
 
 
+class NNMatrixFactorization(MatrixFactorization):
+    def _init_matrix(self):
+        self.P = np.random.normal(size=(self.data.n, self.k), scale=1/self.k)
+        self.P[self.P < 0] = 0
+        self.Q = np.random.normal(size=(self.data.m, self.k), scale=1/self.k)
+        self.Q[self.Q < 0] = 0
+        self.u_bayes = np.random.normal(size=(self.data.n,), scale=.1/self.k)
+        self.u_bayes[self.u_bayes < 0] = 0
+        self.i_bayes = np.random.normal(size=(self.data.m,), scale=.1/self.k)
+        self.i_bayes[self.i_bayes < 0] = 0
+
+    def _update(self, u, i, r):
+        # update P and Q
+        e = r - self._pred_vec(u, i)
+        self.P[u, :] += self.alpha * (e[:, np.newaxis] * self.Q[i, :] - self.mi * self.P[u, :])
+        self.P[u, :][self.P[u, :] < 0] = 0
+        self.Q[i, :] += self.alpha * (e[:, np.newaxis] * self.P[u, :] - self.mi * self.Q[i, :])
+        self.Q[i, :][self.Q[i, :] < 0] = 0
+        self.u_bayes[u] += self.alpha * (e - self.mi * self.u_bayes[u])
+        self.u_bayes[u][self.u_bayes[u] < 0] = 0
+        self.i_bayes[i] += self.alpha * (e - self.mi * self.i_bayes[i])
+        self.i_bayes[i][self.i_bayes[i] < 0] = 0
+        return e
+
+
 if __name__ == '__main__':
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
 
-    mf = MatrixFactorization(k=20, max_iteration=20, batch_size=100)
+    mf = NNMatrixFactorization(k=20, max_iteration=200, batch_size=100)
     mf.fit(uir_data)
     # mf.save("../../models/ml-small-mf")
 
