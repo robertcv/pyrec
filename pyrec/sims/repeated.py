@@ -68,7 +68,8 @@ class RepeatedSimulation:
             sold_i=np.vstack([sim.sim_data.sold_i for sim in sims]),
             not_sold_i=np.vstack([sim.sim_data.not_sold_i for sim in sims]),
             true_r=np.vstack([sim.sim_data.true_r for sim in sims]),
-            pred_r=np.vstack([sim.sim_data.pred_r for sim in sims])
+            pred_r=np.vstack([sim.sim_data.pred_r for sim in sims]),
+            ranking_s=np.vstack([sim.sim_data.ranking_s for sim in sims])
         )
 
 

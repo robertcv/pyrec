@@ -236,16 +236,15 @@ def multi_success_stops(simulations: List['BaseSimulator'], stops: List[int],
     fig, ax = plt.subplots()
 
     for sim in simulations:
-        rmse = []
+        score = []
         sold = []
         for stop in stops:
-            rmse.append(calc_rmse(sim.sim_data.true_r[:stop],
-                                  sim.sim_data.pred_r[:stop]))
+            score.append(np.mean(sim.sim_data.ranking_s[:stop]))
             sold.append(sim.sim_data.sold_i[stop - 1])
-        ax.plot(rmse, sold, '.-', label=sim.name, linewidth=0.5)
+        ax.plot(score, sold, '.-', label=sim.name, linewidth=0.5)
 
     ax.legend()
-    ax.set_xlabel('RMSE')
+    ax.set_xlabel('ranking score')
     ax.set_ylabel('Items sold [%]')
     ax.set_title(f'Success of RSs')
 
@@ -256,23 +255,22 @@ def multi_success_stops(simulations: List['BaseSimulator'], stops: List[int],
 
 
 def multi_success_err(simulations: List['RepeatedSimulation'], save_file=None):
-    rmse, rmse_e, sold, sold_e, label = [], [], [], [], []
+    score, score_e, sold, sold_e, label = [], [], [], [], []
 
     for s in simulations:
-        _rmse = calc_rmse(s.sim_data.true_r, s.sim_data.pred_r, axis=1)
-        rmse.append(np.mean(_rmse))
-        rmse_e.append(np.std(_rmse))
+        score.append(np.mean(s.sim_data.ranking_s))
+        score_e.append(np.std(s.sim_data.ranking_s))
         sold.append(np.mean(s.sim_data.sold_i))
         sold_e.append(np.std(s.sim_data.sold_i))
         label.append(s.name)
 
     fig, ax = plt.subplots()
-    ax.errorbar(rmse, sold, xerr=rmse_e, yerr=sold_e, fmt='none')
+    ax.errorbar(score, sold, xerr=score_e, yerr=sold_e, fmt='none')
 
     for i, txt in enumerate(label):
-        ax.annotate(txt, (rmse[i], sold[i]))
+        ax.annotate(txt, (score[i], sold[i]))
 
-    ax.set_xlabel('RMSE')
+    ax.set_xlabel('ranking score')
     ax.set_ylabel('Items sold [%]')
     ax.set_title(f'Success of RSs')
 
@@ -288,12 +286,12 @@ if __name__ == '__main__':
     from pyrec.recs.mf import MatrixFactorization
     from pyrec.sims.base import TestSimulator
 
-    RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
+    RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
     inv = Inventory(uir_data)
-    mf = MatrixFactorization.load_static("../../models/ml-small-mf")
+    mf = MatrixFactorization.load_static("../models/ml-small-mf")
     mf.data = uir_data
     sim = TestSimulator("best score", uir_data, mf, inv)
     sim.run(1_000)
 
-    plot_ratings_violin(sim)
+    plot_ratings_dist(sim)

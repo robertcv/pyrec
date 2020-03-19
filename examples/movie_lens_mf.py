@@ -1,13 +1,13 @@
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
-from pyrec.sims.rand import RandomFromTopNSimulator
+from pyrec.sims.rand import RandomFromTopNSimulator, BestSimulator
 from pyrec.sims.repeated import RepeatedSimulation
 from pyrec.parallel import MultiSimulator
-from pyrec.plots import multi_success_stops, multi_success_err
+from pyrec.plots import multi_success_stops, multi_success_err, plot_ratings_dist
 from pyrec.recs.mf import MatrixFactorization, NNMatrixFactorization
 from pyrec.recs.post import UnbiasedMatrixFactorization, \
     UnbiasedUsersMatrixFactorization, UserWantMatrixFactorization, \
-    UserNotWantMatrixFactorization
+    UserNotWantMatrixFactorization, UnbiasedItemMatrixFactorization
 
 
 RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
@@ -26,7 +26,7 @@ recs = [("mf", MatrixFactorization),
         ("nnmf", NNMatrixFactorization),
         ("umf", UnbiasedMatrixFactorization),
         ("uumf", UnbiasedUsersMatrixFactorization),
-        ("uwmf", UserWantMatrixFactorization),
+        ("uimf", UnbiasedItemMatrixFactorization),
         ("unwmf", UserNotWantMatrixFactorization)]
 
 # sims = []
@@ -34,7 +34,7 @@ recs = [("mf", MatrixFactorization),
 #     inv = Inventory(uir_data)
 #     r = rec(**rec_kwargs)
 #     r.fit(uir_data)
-#     sims.append(RandomFromTopNSimulator(name, uir_data, r, inv))
+#     sims.append(BestSimulator(name, uir_data, r, inv))
 #
 # # run simulations
 # print("run simulations")
@@ -43,7 +43,7 @@ recs = [("mf", MatrixFactorization),
 # ms.run_parallel()
 #
 # multi_success_stops(sims, list(range(1_000, n + 1, 500)),
-#                     save_file=figure_file + "_20k_success_step.png")
+#                     save_file=figure_file + "_best_20k_success_step.png")
 
 # repeated
 
@@ -54,8 +54,8 @@ sims = []
 for name, rec in recs:
     rs = RepeatedSimulation(name, uir_data, inv,
                             rec, rec_kwargs,
-                            RandomFromTopNSimulator, sim_kwargs)
+                            BestSimulator, sim_kwargs)
     rs.run(n, k)
     sims.append(rs)
 
-multi_success_err(sims, save_file=figure_file + "_20k_success_err.png")
+multi_success_err(sims, save_file=figure_file + "_best_20k_success_err.png")

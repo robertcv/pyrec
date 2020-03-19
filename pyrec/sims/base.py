@@ -6,13 +6,15 @@ import numpy as np
 from pyrec.data import UIRData
 from pyrec.inventory import Inventory
 from pyrec.recs.base import BaseRecommender
+from pyrec.sims.evaluation import ranking_score2
 
 
 sim_data = NamedTuple("sim_data", [("empty_i", np.ndarray),
                                    ("sold_i", np.ndarray),
                                    ("not_sold_i", np.ndarray),
                                    ("true_r", np.ndarray),
-                                   ("pred_r", np.ndarray)])
+                                   ("pred_r", np.ndarray),
+                                   ("ranking_s", np.ndarray)])
 
 
 class BaseSimulator:
@@ -58,12 +60,27 @@ class BaseSimulator:
             else:
                 print(f"{self.name}: {int(per * 100)}%")
 
+    def _ranking_score(self, user):
+        not_bought = self.user_has_not_bought(user)
+        predict_ratings = self.rec.predict_user(user)
+        pred_rating = []
+        true_rating = []
+        for item, r in self.test_ratings[user].items():
+            i = self.data.item2index[item]
+            if not_bought[i]:
+                true_rating.append(r)
+                pred_rating.append(predict_ratings[i])
+
+        return ranking_score2(np.array(true_rating),
+                              np.array(pred_rating))
+
     def run(self, n=1000):
         empty_items = []
         sold_items = [0]
         not_sold_items = [0]
         true_ratings = []
         predicted_ratings = []
+        ranking = []
 
         _n = n // 10
 
@@ -79,6 +96,7 @@ class BaseSimulator:
                 true_ratings.append(self.test_ratings[user][item])
             else:
                 true_ratings.append(np.nan)
+            ranking.append(self._ranking_score(user))
 
             self.user_bought_item(user, item)
 
@@ -100,7 +118,8 @@ class BaseSimulator:
                                  sold_i=np.array(sold_items[1:]),
                                  not_sold_i=np.array(not_sold_items[1:]),
                                  true_r=np.array(true_ratings),
-                                 pred_r=np.array(predicted_ratings))
+                                 pred_r=np.array(predicted_ratings),
+                                 ranking_s=np.array(ranking))
         return deepcopy(self.sim_data)
 
 
