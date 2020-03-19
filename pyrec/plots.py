@@ -58,14 +58,15 @@ def plot_ratings(sim: BaseSimulator, save_file=None, mean_size=50):
         plt.show()
 
 
-def _violin_stats(data, n):
-    def _kde_method(X, coords):
-        # fallback gracefully if the vector contains only one value
-        if np.all(X[0] == X):
-            return (X[0] == coords).astype(float)
-        kde = mlab.GaussianKDE(X)
-        return kde.evaluate(coords)
+def _kde_method(X, coords):
+    # fallback gracefully if the vector contains only one value
+    if np.all(X[0] == X):
+        return (X[0] == coords).astype(float)
+    kde = mlab.GaussianKDE(X)
+    return kde.evaluate(coords)
 
+
+def _violin_stats(data, n):
     stats = []
     for i, d in enumerate(np.array_split(data, n)):
         _d = d[~np.isnan(d)]
@@ -152,6 +153,32 @@ def plot_ratings_violin(sim: BaseSimulator, save_file=None, n=10):
         label.set_visible(False)
 
     ax0.set_title(f'Change of ratings in {sim.name} simulation')
+
+    if save_file is not None:
+        fig.savefig(save_file)
+    else:
+        plt.show()
+
+
+def plot_ratings_dist(sim: BaseSimulator, save_file=None):
+    test_ratings = np.array(sim.sim_data.true_r)
+    predicted_ratings = np.array(sim.sim_data.pred_r)
+
+    test_ratings = test_ratings[~np.isnan(test_ratings)]
+    test_stats = violin_stats(test_ratings, _kde_method)[0]
+    test_y = test_stats['vals'] / test_stats['vals'].max()
+    test_x = test_stats["coords"]
+
+    predicted_stats = violin_stats(predicted_ratings, _kde_method)[0]
+    predicted_y = predicted_stats['vals'] / predicted_stats['vals'].max()
+    predicted_x = predicted_stats["coords"]
+
+    fig, ax = plt.subplots()
+    ax.plot(test_x, test_y, label="test rating")
+    ax.plot(predicted_x, predicted_y, label="predicted rating")
+    ax.legend()
+    ax.set_xlabel('rating')
+    ax.set_title(f'Distribution of test and predicted ratings in {sim.name} simulation')
 
     if save_file is not None:
         fig.savefig(save_file)
