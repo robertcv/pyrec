@@ -258,10 +258,10 @@ def multi_success_err(simulations: List['RepeatedSimulation'], save_file=None):
     score, score_e, sold, sold_e, label = [], [], [], [], []
 
     for s in simulations:
-        score.append(np.mean(s.sim_data.ranking_s))
-        score_e.append(np.std(s.sim_data.ranking_s))
-        sold.append(np.mean(s.sim_data.sold_i))
-        sold_e.append(np.std(s.sim_data.sold_i))
+        score.append(np.mean(np.mean(s.sim_data.ranking_s, axis=1)))
+        score_e.append(np.std(np.mean(s.sim_data.ranking_s, axis=1)))
+        sold.append(np.mean(s.sim_data.sold_i[:, -1]))
+        sold_e.append(np.std(s.sim_data.sold_i[:, -1]))
         label.append(s.name)
 
     fig, ax = plt.subplots()
