@@ -4,9 +4,10 @@ from pyrec.sims.rand import RandomFromTopNSimulator, BestSimulator
 from pyrec.sims.repeated import RepeatedSimulation
 from pyrec.parallel import MultiSimulator
 from pyrec.plots import multi_success_stops, multi_success_err, plot_ratings_dist
-from pyrec.recs.mf import MatrixFactorization, NNMatrixFactorization
+from pyrec.recs.mf import MatrixFactorization, NNMatrixFactorization, \
+    RandomMatrixFactorization
 from pyrec.recs.post import UnbiasedMatrixFactorization, \
-    UnbiasedUsersMatrixFactorization, UserWantMatrixFactorization, \
+    UnbiasedUsersMatrixFactorization, \
     UserNotWantMatrixFactorization, UnbiasedItemMatrixFactorization
 
 
@@ -24,6 +25,7 @@ sim_kwargs = {"verbose": True}
 
 recs = [("mf", MatrixFactorization),
         ("nnmf", NNMatrixFactorization),
+        ("rmf", RandomMatrixFactorization),
         ("umf", UnbiasedMatrixFactorization),
         ("uumf", UnbiasedUsersMatrixFactorization),
         ("uimf", UnbiasedItemMatrixFactorization),

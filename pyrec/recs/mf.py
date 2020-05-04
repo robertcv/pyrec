@@ -154,6 +154,11 @@ class NNMatrixFactorization(MatrixFactorization):
         return e
 
 
+class RandomMatrixFactorization(MatrixFactorization):
+    def _update(self, u, i, r):
+        return 0
+
+
 if __name__ == '__main__':
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
