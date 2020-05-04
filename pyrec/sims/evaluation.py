@@ -5,8 +5,10 @@ import numpy as np
 
 def ranking_score(true_rating, pred_rating):
     """slower but less memory"""
-    if not len(true_rating):
+    if len(true_rating) == 0:
         return 0
+    elif len(true_rating) == 1:
+        return 1
 
     arg_sort = np.argsort(pred_rating)
     true = true_rating[arg_sort]
@@ -26,8 +28,10 @@ def ranking_score(true_rating, pred_rating):
 
 def ranking_score2(true_rating, pred_rating):
     """faster but creates len(test_ratings) * len(test_ratings) sized matrix"""
-    if not len(true_rating):
+    if len(true_rating) == 0:
         return 0
+    elif len(true_rating) == 1:
+        return 1
 
     arg_sort = np.argsort(pred_rating)
     true = true_rating[arg_sort]
