@@ -24,7 +24,7 @@ class Inventory:
         return f"Inv ({self.current_count()} all, {len(self.counts)} items)"
 
     def copy(self) -> 'Inventory':
-        inv = Inventory(np.array([]))
+        inv = type(self)(np.array([1]))
         inv.items = np.array(self.items)
         inv.item2i = self.item2i.copy()
         inv.counts = np.array(self.counts)
@@ -74,6 +74,12 @@ class UniformInventory(Inventory):
         self.start_size = len(self.items) * n
         self.name = "uinv"
 
+    def copy(self):
+        inv = super().copy()
+        inv.counts = np.array(self.counts)
+        inv.start_size = self.start_size
+        return inv
+
 
 class RandomInventory(Inventory):
     def __init__(self, data: Union[UIRData, np.ndarray]):
@@ -81,6 +87,12 @@ class RandomInventory(Inventory):
         np.random.seed(None)
         np.random.shuffle(self.counts)
         self.name = "rinv"
+
+    def copy(self):
+        inv = super().copy()
+        np.random.seed(None)
+        np.random.shuffle(inv.counts)
+        return inv
 
 
 if __name__ == '__main__':
