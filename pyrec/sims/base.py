@@ -1,5 +1,7 @@
+import os
 from copy import deepcopy
 from typing import NamedTuple, Optional
+from datetime import datetime
 
 import numpy as np
 
@@ -19,7 +21,7 @@ sim_data = NamedTuple("sim_data", [("empty_i", np.ndarray),
 
 class BaseSimulator:
     def __init__(self, name, data: UIRData, rec: BaseRecommender,
-                 inv: Inventory, verbose=True):
+                 inv: Inventory, verbose=True, save="../../sim/"):
         self.name = name
         self.data = data
         self.bought = data.hier_bought
@@ -27,6 +29,7 @@ class BaseSimulator:
         self.rec = rec
         self.inv = inv
         self.verbose = verbose
+        self.save = save
 
         self.sim_data = None  # type: Optional[sim_data]
 
@@ -120,7 +123,20 @@ class BaseSimulator:
                                  true_r=np.array(true_ratings),
                                  pred_r=np.array(predicted_ratings),
                                  ranking_s=np.array(ranking))
+        if self.save is not None:
+            self._save()
+
         return deepcopy(self.sim_data)
+
+    def _save(self):
+        file = self.name + " " + str(datetime.now()) + ".npz"
+        file = os.path.join(self.save, file)
+        np.savez(file, empty_i=self.sim_data.empty_i,
+                 sold_i=self.sim_data.sold_i,
+                 not_sold_i=self.sim_data.not_sold_i,
+                 true_r=self.sim_data.true_r,
+                 pred_r=self.sim_data.pred_r,
+                 ranking_s=self.sim_data.ranking_s)
 
 
 class TestSimulator(BaseSimulator):

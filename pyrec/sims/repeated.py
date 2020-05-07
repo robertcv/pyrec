@@ -1,3 +1,5 @@
+import os
+from datetime import datetime
 from typing import Optional
 
 import numpy as np
@@ -11,7 +13,7 @@ from pyrec.parallel import MultiSimulator, MultiRecommender
 
 class RepeatedSimulation:
     def __init__(self, name, data: UIRData, inv: Inventory,
-                 rec, rec_kwargs: dict, sim, sim_kwargs: dict):
+                 rec, rec_kwargs: dict, sim, sim_kwargs: dict, save="../sim"):
         """data and inv must be an instance, others are just class"""
         self.name = name
         self.data = data
@@ -20,6 +22,7 @@ class RepeatedSimulation:
         self.rec_kwargs = rec_kwargs
         self.sim = sim
         self.sim_kwargs = sim_kwargs
+        self.save = save
 
         self.sim_data = None  # type: Optional[sim_data]
 
@@ -56,6 +59,7 @@ class RepeatedSimulation:
             self.sim_kwargs["data"] = data[i]
             self.sim_kwargs["inv"] = inv[i]
             self.sim_kwargs["rec"] = recs[i]
+            self.sim_kwargs["save"] = None
             sim = self.sim(**self.sim_kwargs)  # type: BaseSimulator
             sims.append(sim)
 
@@ -71,6 +75,16 @@ class RepeatedSimulation:
             pred_r=np.vstack([sim.sim_data.pred_r for sim in sims]),
             ranking_s=np.vstack([sim.sim_data.ranking_s for sim in sims])
         )
+
+        if self.save is not None:
+            file = "rep " + self.name + " " + str(datetime.now()) + ".npz"
+            file = os.path.join(self.save, file)
+            np.savez(file, empty_i=self.sim_data.empty_i,
+                     sold_i=self.sim_data.sold_i,
+                     not_sold_i=self.sim_data.not_sold_i,
+                     true_r=self.sim_data.true_r,
+                     pred_r=self.sim_data.pred_r,
+                     ranking_s=self.sim_data.ranking_s)
 
 
 if __name__ == '__main__':
