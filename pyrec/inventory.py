@@ -75,6 +75,14 @@ class UniformInventory(Inventory):
         self.name = "uinv"
 
 
+class RandomInventory(Inventory):
+    def __init__(self, data: Union[UIRData, np.ndarray]):
+        super().__init__(data)
+        np.random.seed(None)
+        np.random.shuffle(self.counts)
+        self.name = "rinv"
+
+
 if __name__ == '__main__':
     RATINGS_FILE = "../data/MovieLens/ml-latest-small/ratings.csv"
 
