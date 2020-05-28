@@ -5,15 +5,15 @@ from pyrec.recs.base import BaseRecommender
 
 class WeightedRecommender(BaseRecommender):
     """
-    r = alpha * rec1_r + (1 - alpha) * rec2_r
+    r = walpha * rec1_r + (1 - walpha) * rec2_r
     """
-    def __init__(self, alpha, rec1, rec1_kwargs: dict,
+    def __init__(self, walpha, rec1, rec1_kwargs: dict,
                  rec2, rec2_kwargs: dict, verbose=True, **kwargs):
         """
         This accepts either an already initialized and fitted model or
         it initializes the given class with rec_kwargs and fits it in fit.
         """
-        self.alpha = alpha
+        self.walpha = walpha
         self.verbose = verbose
 
         self.rec1 = rec1  # type: BaseRecommender
@@ -49,13 +49,13 @@ class WeightedRecommender(BaseRecommender):
         self.__dict__[name] = value
 
     def _predict(self, user_index: int, item_index: int) -> float:
-        r = self.alpha * self.rec1._predict(user_index, item_index) + \
-            (1 - self.alpha) * self.rec2._predict(user_index, item_index)
+        r = self.walpha * self.rec1._predict(user_index, item_index) + \
+            (1 - self.walpha) * self.rec2._predict(user_index, item_index)
         return r
 
     def _predict_user(self, user_index: int) -> np.ndarray:
-        ratings = self.alpha * self.rec1._predict_user(user_index) + \
-                  (1 - self.alpha) * self.rec2._predict_user(user_index)
+        ratings = self.walpha * self.rec1._predict_user(user_index) + \
+                  (1 - self.walpha) * self.rec2._predict_user(user_index)
         return ratings
 
     def save(self, file_name):

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.cbook import violin_stats
 import matplotlib.mlab as mlab
+import matplotlib.lines as mlines
 
 from pyrec.inventory import Inventory
 from pyrec.sims.base import BaseSimulator
@@ -246,7 +247,7 @@ def multi_success_stops(simulations: List['BaseSimulator'], stops: List[int],
     ax.legend()
     ax.set_xlabel('ranking score')
     ax.set_ylabel('Items sold [%]')
-    ax.set_title(f'Success of RSs')
+    ax.set_title(f'Simulation trace of RSs')
 
     if save_file is not None:
         fig.savefig(save_file)
@@ -265,11 +266,15 @@ def multi_success_err(simulations: List['RepeatedSimulation'], save_file=None):
         label.append(s.name)
 
     fig, ax = plt.subplots()
-    ax.errorbar(score, sold, xerr=score_e, yerr=sold_e, fmt='none')
-
+    handles = []
     for i, txt in enumerate(label):
-        ax.annotate(txt, (score[i], sold[i]))
+        color = ax._get_lines.get_next_color()
+        handles.append(mlines.Line2D([], [], color=color, label=txt))
+        ax.errorbar(score[i], sold[i],
+                    xerr=score_e[i], yerr=sold_e[i],
+                    fmt='none', color=color)
 
+    plt.legend(handles=handles)
     ax.set_xlabel('ranking score')
     ax.set_ylabel('Items sold [%]')
     ax.set_title(f'Success of RSs')

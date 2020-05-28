@@ -21,7 +21,7 @@ rec_kwargs = {"verbose": False,
 sims = []
 alphas = [0, 0.5, 0.7, 0.8, 0.9, 0.95, 1]
 for a in alphas:
-    rec_kwargs["alpha"] = a
+    rec_kwargs["walpha"] = a
     rs = RepeatedSimulation(f"a={a}", uir_data, inv,
                             WeightedRecommender, rec_kwargs,
                             RandomFromTopNSimulator, {"verbose": False})

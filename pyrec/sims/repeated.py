@@ -47,7 +47,7 @@ class RepeatedSimulation:
             rec = self.rec(**self.rec_kwargs)  # type: BaseRecommender
             recs.append(rec)
 
-        mr = MultiRecommender("../../tmp")
+        mr = MultiRecommender("../tmp")
         mr.set_recs(recs, data)
         mr.fit_parallel()
 
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
     inv = Inventory(uir_data)
-    rec_kwargs = {"alpha": 0.5, "verbose": False,
+    rec_kwargs = {"walpha": 0.5, "verbose": False,
                   "rec1": MatrixFactorization,
                   "rec1_kwargs": {"max_iteration": 10, "batch_size": 100},
                   "rec2": MostInInvRecommender,

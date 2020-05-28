@@ -21,7 +21,7 @@ sim_data = NamedTuple("sim_data", [("empty_i", np.ndarray),
 
 class BaseSimulator:
     def __init__(self, name, data: UIRData, rec: BaseRecommender,
-                 inv: Inventory, verbose=True, save="../../sim/"):
+                 inv: Inventory, verbose=True, save="/home/robertcv/git/mag/sim/"):
         self.name = name
         self.data = data
         self.bought = data.hier_bought
