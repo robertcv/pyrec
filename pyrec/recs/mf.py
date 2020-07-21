@@ -154,6 +154,22 @@ class NNMatrixFactorization(MatrixFactorization):
         return e
 
 
+class UnbiasedMatrixFactorization(MatrixFactorization):
+    def _init_matrix(self):
+        self.P = np.random.normal(size=(self.data.n, self.k), scale=1/self.k)
+        self.Q = np.random.normal(size=(self.data.m, self.k), scale=1/self.k)
+
+    def _update(self, u, i, r):
+        # update P and Q
+        e = r - self._pred_vec(u, i)
+        self.P[u, :] += self.alpha * (e[:, np.newaxis] * self.Q[i, :] - self.mi * self.P[u, :])
+        self.Q[i, :] += self.alpha * (e[:, np.newaxis] * self.P[u, :] - self.mi * self.Q[i, :])
+        return e
+
+    def _pred_vec(self, u, i):
+        return np.sum(self.P[u, :] * self.Q[i, :], axis=1)
+
+
 class RandomMatrixFactorization(MatrixFactorization):
     def _update(self, u, i, r):
         return 0

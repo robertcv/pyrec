@@ -37,37 +37,6 @@ class BasePost(BaseRecommender):
         self.rec.load(file_name + "_1")
 
 
-class UnbiasedMatrixFactorization(BasePost):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        assert isinstance(self.rec, MatrixFactorization)
-
-    def _predict(self, user_index, item_index):
-        return np.sum(self.rec.P[user_index, :] * self.rec.Q[item_index, :])
-
-    def _predict_user(self, user_index):
-        return np.sum(self.rec.P[np.repeat(user_index, self.data.m), :] *
-                      self.rec.Q[np.arange(self.data.m), :], axis=1)
-
-
-class UnbiasedUsersMatrixFactorization(UnbiasedMatrixFactorization):
-    def _predict(self, user_index, item_index):
-        return super()._predict(user_index, item_index) + \
-               self.rec.i_bayes[item_index]
-
-    def _predict_user(self, user_index):
-        return super()._predict_user(user_index) + self.rec.i_bayes
-
-
-class UnbiasedItemMatrixFactorization(UnbiasedMatrixFactorization):
-    def _predict(self, user_index, item_index):
-        return super()._predict(user_index, item_index) + \
-               self.rec.u_bayes[user_index]
-
-    def _predict_user(self, user_index):
-        return super()._predict_user(user_index) + self.rec.u_bayes[user_index]
-
-
 class UserWantMatrixFactorization(BasePost):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -104,7 +73,7 @@ if __name__ == '__main__':
     RATINGS_FILE = "../../data/MovieLens/ml-latest-small/ratings.csv"
     uir_data = UIRData.from_csv(RATINGS_FILE)
 
-    mf = UnbiasedMatrixFactorization(k=20, max_iteration=200,
+    mf = UserWantMatrixFactorization(k=20, max_iteration=200,
                                      batch_size=100)
     mf.fit(uir_data)
     mf.predict(uir_data.unique_values.users[0],
