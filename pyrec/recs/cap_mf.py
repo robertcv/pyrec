@@ -50,6 +50,12 @@ class CapMF(MatrixFactorization):
         validation_i = data.validation_data.items
         validation_r = data.validation_data.ratings / data.validation_data.ratings.max()
 
+        def _ve():
+            ame = np.mean(np.abs(validation_r - self._pred_vec2(validation_u, validation_i)))
+            eu = np.sum(self.p_i[validation_u] * sigmoid(self._pred_vec2(validation_u, validation_i)))
+            c_loss = np.mean(np.log(1 + np.exp(self.inv.counts[validation_i] - eu)))
+            return ame, c_loss
+
         self.p_i = np.zeros(self.data.n)
         for u in np.arange(self.data.n):
             self.p_i[u] = len(np.unique(self.data.indexed_data.items[self.data.indexed_data.users == u])) / self.data.m
@@ -64,49 +70,59 @@ class CapMF(MatrixFactorization):
 
         r_ij = np.zeros((self.data.n, self.data.m))
         r_ij[train_u, train_i] = train_r
-        start_t = time.time()
+
+        ame, c_loss = _ve()
+        last_e = self.walpha * ame + (1 - self.walpha) * c_loss
+
+        end = False
         for iteration in range(self.max_iteration):
             index = 0
             np.random.shuffle(train_select)
             for i, j in zip(train_u[train_select], train_i[train_select]):
                 # update user
-                user_gradient = -self.walpha * np.sum(2 * (r_ij[i, L_i[i]] - self._pred_vec(i, L_i[i]))[:, np.newaxis] * self.Q[L_i[i], :], axis=0)
+                user_gradient = -self.walpha * np.sum(2 * (r_ij[i, L_i[i]] - self._pred_vec2(i, L_i[i]))[:, np.newaxis] * self.Q[L_i[i], :], axis=0)
                 user_gradient += 2 * self.mi * self.P[i, :]
 
                 cl = self.inv.counts - self._expected_usage()
-                _r_ij = self._pred_vec(i, np.arange(self.data.m))
+                _r_ij = self._pred_vec2(i, np.arange(self.data.m))
                 tmp = sigmoid(-cl) * self.p_i[i] * sigmoid(_r_ij) * sigmoid(-_r_ij)
                 user_gradient += ((1 - self.walpha) / self.data.m) * np.sum(tmp[:, np.newaxis] * self.Q, axis=0)
 
                 self.P[i, :] = self.P[i, :] - self.alpha * user_gradient
 
                 # update item
-                item_gradient = -self.walpha * np.sum(2 * (r_ij[Ra[j], j] - self._pred_vec(Ra[j], j))[:, np.newaxis] * self.P[Ra[j], :], axis=0)
+                item_gradient = -self.walpha * np.sum(2 * (r_ij[Ra[j], j] - self._pred_vec2(Ra[j], j))[:, np.newaxis] * self.P[Ra[j], :], axis=0)
                 item_gradient += 2 * self.mi * self.Q[j, :]
 
                 cl = self.inv.counts[j] - self._expected_usage()[j]
-                _r_ij = self._pred_vec(np.arange(self.data.n), j)
+                _r_ij = self._pred_vec2(np.arange(self.data.n), j)
                 tmp = self.p_i * sigmoid(_r_ij) * sigmoid(-_r_ij)
                 item_gradient += ((1 - self.walpha) / self.data.m) * sigmoid(-cl) * np.sum(tmp[:, np.newaxis] * self.P, axis=0)
 
                 self.Q[i, :] = self.Q[i, :] - self.alpha * item_gradient
 
-                if index % 100 == 0:
-                    ame = np.mean(np.abs(validation_r - self._pred_vec(validation_u, validation_i)))
-                    c_loss = np.mean(self.inv.counts[validation_i] - np.sum(self.p_i[validation_u] * sigmoid(self._pred_vec(validation_u, validation_i))))
-
-                    iter_t = time.time() - start_t
-                    self._print_verbose(f"iter t: {iter_t:.3f} ame: {ame:.3f} c_loss: {c_loss:.3f}")
-                    start_t = time.time()
+                if index % 20 == 0:
+                    ame, c_loss = _ve()
+                    validation_e = self.walpha * ame + (1 - self.walpha) * c_loss
+                    self._print_verbose(f"e: {validation_e:.6f}")
+                    if last_e < validation_e and index > 500:
+                        self._print_verbose(f"Ending after iteration {iteration} index {index}")
+                        end = True
+                        break
+                    else:
+                        last_e = validation_e
                 index += 1
 
-    def _pred_vec(self, u, i):
+            if end:
+                break
+
+    def _pred_vec2(self, u, i):
         if isinstance(u, np.ndarray) or isinstance(i, np.ndarray):
             return np.sum(self.P[u, :] * self.Q[i, :], axis=1)
         return np.sum(self.P[u, :] * self.Q[i, :])
 
     def _expected_usage(self):
-        if self.cache_n % 100 == 0:
+        if self.cache_n % 10 == 0:
             self.eu = np.sum(self.p_i[:, np.newaxis] * sigmoid(np.dot(self.P, self.Q.T)), axis=0)
         self.cache_n += 1
         return self.eu
