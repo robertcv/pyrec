@@ -171,8 +171,9 @@ class UnbiasedMatrixFactorization(MatrixFactorization):
 
 
 class RandomMatrixFactorization(MatrixFactorization):
-    def _update(self, u, i, r):
-        return 0
+    def fit(self, data: UIRData):
+        super().fit(data)
+        self._init_matrix()
 
 
 if __name__ == '__main__':
