@@ -14,7 +14,7 @@ def sigmoid(x):
 class CapMF(MatrixFactorization):
     def __init__(self, inv: Inventory, walpha=0.5,
                  k=20, max_iteration=1000, batch_size=100,
-                 alpha=0.01, mi=0.001, verbose=True, seed=None, **kwargs):
+                 alpha=1e-4, mi=1e-5, verbose=True, seed=None, **kwargs):
         super().__init__(k=k, max_iteration=max_iteration,
                          batch_size=batch_size, alpha=alpha, mi=mi,
                          verbose=verbose, seed=seed, **kwargs)
@@ -52,8 +52,16 @@ class CapMF(MatrixFactorization):
 
         def _ve():
             ame = np.mean(np.abs(validation_r - self._pred_vec2(validation_u, validation_i)))
-            eu = np.sum(self.p_i[validation_u] * sigmoid(self._pred_vec2(validation_u, validation_i)))
-            c_loss = np.mean(np.log(1 + np.exp(self.inv.counts[validation_i] - eu)))
+            self.cache_n = 0
+            eu = self._expected_usage()
+            c_loss = np.mean(np.log(1 + np.exp(self.inv.counts[validation_i] - eu[validation_i])))
+            return ame, c_loss
+
+        def _te():
+            ame = np.mean(np.abs(train_r - self._pred_vec2(train_u, train_i)))
+            self.cache_n = 0
+            eu = self._expected_usage()
+            c_loss = np.mean(np.log(1 + np.exp(self.inv.counts[train_i] - eu[train_i])))
             return ame, c_loss
 
         self.p_i = np.zeros(self.data.n)
@@ -101,11 +109,11 @@ class CapMF(MatrixFactorization):
 
                 self.Q[i, :] = self.Q[i, :] - self.alpha * item_gradient
 
-                if index % 20 == 0:
+                if index % 100 == 0:
                     ame, c_loss = _ve()
                     validation_e = self.walpha * ame + (1 - self.walpha) * c_loss
-                    self._print_verbose(f"e: {validation_e:.6f}")
-                    if last_e < validation_e and index > 500:
+                    self._print_verbose(f"e: {validation_e:.6f} ame: {ame:.6f} c_loss: {c_loss:.6f}")
+                    if last_e < validation_e and index > 1000:
                         self._print_verbose(f"Ending after iteration {iteration} index {index}")
                         end = True
                         break
@@ -122,7 +130,7 @@ class CapMF(MatrixFactorization):
         return np.sum(self.P[u, :] * self.Q[i, :])
 
     def _expected_usage(self):
-        if self.cache_n % 10 == 0:
+        if self.cache_n % 100 == 0:
             self.eu = np.sum(self.p_i[:, np.newaxis] * sigmoid(np.dot(self.P, self.Q.T)), axis=0)
         self.cache_n += 1
         return self.eu
@@ -133,7 +141,7 @@ if __name__ == '__main__':
     uir_data = UIRData.from_csv(RATINGS_FILE)
     inv = Inventory(uir_data)
 
-    mf = CapMF(inv)
+    mf = CapMF(inv, alpha=1e-4, mi=1e-5)
     mf.fit(uir_data)
     # mf.save("../../models/ml-small-mf")
 
