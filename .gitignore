@@ -36,3 +36,4 @@ venv
 notebooks/.ipynb_checkpoints
 data
 !data/MovieLens/ml-latest-small/ratings.csv
+!data/podatki/preprocess.py
