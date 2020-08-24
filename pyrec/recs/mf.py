@@ -69,7 +69,7 @@ class MatrixFactorization(BaseRecommender):
                                           self._pred_vec(validation_u, validation_i)))
             iter_t = time.time() - start_t
             self._print_verbose(f"iter t: {iter_t:.5f}, train e: {train_e:.5f}, validation e: {validation_e:.5f}")
-            if last_e < validation_e:
+            if iteration > 10 and last_e < validation_e:
                 self._print_verbose(f"Ending after iteration {iteration}")
                 break
             else:
