@@ -1,10 +1,18 @@
+import matplotlib.pylab as plt
 import pandas as pd
+
 
 pd.set_option('display.max_columns', 10)
 pd.set_option('display.width', 1000)
 
 df = pd.read_csv("nakupi.csv", parse_dates=[2])
 print('opened file')
+
+# remove users with less then n purchases
+user_doc_count = df.groupby(['gn']).agg({"dokument": "nunique"})
+df = df.set_index('gn')
+df = df.drop(index=user_doc_count[user_doc_count.dokument < 10].index)
+df = df.reset_index()
 
 # for each user, item, document sum up all item counts
 user_item_doc_sum = df.groupby(['gn', 'artikel', 'dokument']).sum()[['kolicina']]
@@ -23,7 +31,7 @@ user_item = user_item.join(item_doc_min_count, lsuffix='', rsuffix='_all_min')
 user_item = user_item.join(item_doc_max_count, lsuffix='', rsuffix='_all_max')
 user_item['item_count_score'] = (user_item['kolicina'] - user_item['kolicina_all_min']) / \
                                 (user_item['kolicina_all_max'] - user_item['kolicina_all_min'])
-user_item['item_count_score'] = user_item['item_count_score'].fillna(0)
+user_item['item_count_score'] = user_item['item_count_score'].fillna(1)
 print('score 1')
 
 # get number of documents different documents for each user
@@ -37,22 +45,7 @@ user_item = user_item.join(user_item_doc_count, lsuffix='', rsuffix='_item')
 user_item['item_doc_score'] = user_item['dokument_item'] / user_item['dokument']
 print('score 2')
 
-# get latest purchasing date for item, user pair
-item_user_latest = df.groupby(['gn', 'artikel']).max()[['datum_prometa']]
-# get min and max date of items
-item_min_time = df.groupby(['artikel']).min()[['datum_prometa']]
-item_max_time = df.groupby(['artikel']).max()[['datum_prometa']]
-
-# calculate a score of when was the last time an item was purchased
-user_item = user_item.join(item_user_latest)
-user_item = user_item.join(item_min_time, lsuffix='', rsuffix='_min')
-user_item = user_item.join(item_max_time, lsuffix='', rsuffix='_max')
-user_item['item_time_score'] = (user_item['datum_prometa'] - user_item['datum_prometa_min']) / \
-                                (user_item['datum_prometa_max'] - user_item['datum_prometa_min'])
-user_item['item_time_score'] = user_item['item_time_score'].fillna(0)
-print('score 3')
-
 # sum up scores and save to file
-user_item['score'] = user_item['item_count_score'] + user_item['item_doc_score'] + user_item['item_time_score']
+user_item['score'] = (user_item['item_count_score'] * user_item['item_doc_score']) ** 0.5
 user_item = user_item.reset_index()[['gn', 'artikel', 'score']]
 user_item.to_csv('ratings.csv', index=False)
