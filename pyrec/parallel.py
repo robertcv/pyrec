@@ -51,10 +51,12 @@ def fit_rec(rec: BaseRecommender, data: UIRData, dump_file: str):
 
 
 class MultiRecommender:
-    def __init__(self, dump_dir):
-        self.dump_dir = dump_dir
-        if not os.path.exists(dump_dir):
-            os.makedirs(dump_dir)
+    dump_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            '..', '.cache', 'rec_dump')
+
+    def __init__(self):
+        if not os.path.exists(self.dump_dir):
+            os.makedirs(self.dump_dir)
         self.recs = []
         self.data = []
 
@@ -93,7 +95,7 @@ if __name__ == '__main__':
     mfs = [MatrixFactorization(max_iteration=20, batch_size=100)
            for _ in range(1)]
 
-    mr = MultiRecommender("../tmp")
+    mr = MultiRecommender()
     mr.set_recs(mfs, data)
     mr.fit_parallel()
     print(mr.recs[0]._predict(0, 0))

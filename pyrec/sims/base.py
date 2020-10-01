@@ -20,8 +20,11 @@ sim_data = NamedTuple("sim_data", [("empty_i", np.ndarray),
 
 
 class BaseSimulator:
+    dump_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            '..', '..', '.cache', 'sim_dump')
+
     def __init__(self, name, data: UIRData, rec: BaseRecommender,
-                 inv: Inventory, verbose=True, save="../sim/"):
+                 inv: Inventory, verbose=True):
         self.name = name
         self.data = data
         self.bought = data.hier_bought
@@ -29,7 +32,9 @@ class BaseSimulator:
         self.rec = rec
         self.inv = inv
         self.verbose = verbose
-        self.save = save
+
+        if not os.path.exists(self.dump_dir):
+            os.makedirs(self.dump_dir)
 
         self.sim_data = None  # type: Optional[sim_data]
 
@@ -123,20 +128,17 @@ class BaseSimulator:
                                  true_r=np.array(true_ratings),
                                  pred_r=np.array(predicted_ratings),
                                  ranking_s=np.array(ranking))
-        if self.save is not None:
-            self._save()
 
-        return deepcopy(self.sim_data)
-
-    def _save(self):
         file = self.name + " " + str(datetime.now()) + ".npz"
-        file = os.path.join(self.save, file)
+        file = os.path.join(self.dump_dir, file)
         np.savez(file, empty_i=self.sim_data.empty_i,
                  sold_i=self.sim_data.sold_i,
                  not_sold_i=self.sim_data.not_sold_i,
                  true_r=self.sim_data.true_r,
                  pred_r=self.sim_data.pred_r,
                  ranking_s=self.sim_data.ranking_s)
+
+        return deepcopy(self.sim_data)
 
 
 class TestSimulator(BaseSimulator):
