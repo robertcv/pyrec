@@ -1,5 +1,8 @@
 import matplotlib.pylab as plt
+import numpy as np
 import pandas as pd
+from scipy.stats import rankdata
+from sklearn.preprocessing import QuantileTransformer
 
 
 pd.set_option('display.max_columns', 10)
@@ -45,7 +48,27 @@ user_item = user_item.join(user_item_doc_count, lsuffix='', rsuffix='_item')
 user_item['item_doc_score'] = user_item['dokument_item'] / user_item['dokument']
 print('score 2')
 
-# sum up scores and save to file
-user_item['score'] = (user_item['item_count_score'] * user_item['item_doc_score']) ** 0.5
+# sum up scores
+user_item['score'] = user_item['item_count_score'] + user_item['item_doc_score']
+index = user_item.index.copy()
 user_item = user_item.reset_index()[['gn', 'artikel', 'score']]
+# user_item = user_item[user_item['score'] != 0]
+
+
+# normalize by user
+def rank_normalization(x):
+    # x_norm = rankdata(x) / len(x)
+    x_norm = QuantileTransformer(n_quantiles=len(x)).fit_transform(
+        x.values.reshape(-1, 1)).flatten()
+    if isinstance(x, pd.Series):
+        return pd.Series(x_norm, index=x.index)
+    elif isinstance(x, pd.DataFrame):
+        return pd.DataFrame(x_norm, index=x.index, columns=x.columns)
+    else:
+        print(type(x))
+
+
+# user_item = user_item[['gn', 'score']].groupby(['gn']).transform(rank_normalization)
+# user_item.index = index
+# user_item = user_item.reset_index()
 user_item.to_csv('ratings.csv', index=False)

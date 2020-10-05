@@ -11,8 +11,11 @@ class Inventory:
         if isinstance(data, UIRData):
             unique, unique_counts = np.unique(data.raw_data.items,
                                               return_counts=True)
+        elif isinstance(data, np.ndarray):
+            unique, unique_counts = np.array(data[:, 0]), \
+                                    np.array(data[:, 1], dtype=int)
         else:
-            unique, unique_counts = np.unique(data, return_counts=True)
+            raise ValueError("unsupported datatype")
 
         self.items = unique
         self.item2i = {item: i for i, item in enumerate(self.items)}
