@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from pyrec.data import UIRData
@@ -20,8 +19,7 @@ plt.xlabel("Ocene")
 plt.ylabel("Frekvenca")
 plt.show()
 
-inv_data = pd.read_csv("../data/podatki/inv.csv")
-inv = Inventory(inv_data.values)
+inv = Inventory.from_csv("../data/podatki/inv.csv")
 print(f"Količina zaloge: {inv.start_size}")
 
 counts = np.sort(inv.counts)[::-1]

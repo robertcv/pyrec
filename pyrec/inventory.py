@@ -1,6 +1,7 @@
 from typing import Union
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 from pyrec.data import UIRData
@@ -23,11 +24,22 @@ class Inventory:
         self.start_size = np.sum(self.counts)
         self.name = "inv"
 
+    @staticmethod
+    def from_csv(file_name: str) -> 'Inventory':
+        """
+        Load csv data from file_name. The first columns is assumed
+        to be item ids and second inventory count.
+        :param file_name: location of the csv file
+        :return: a new Inventory object initialized with data from csv
+        """
+        df = pd.read_csv(file_name)
+        return Inventory(df.values[:, :2])
+
     def __repr__(self):
         return f"Inv ({self.current_count()} all, {len(self.counts)} items)"
 
     def copy(self) -> 'Inventory':
-        inv = type(self)(np.array([1]))
+        inv = type(self)(np.zeros((1, 2)))
         inv.items = np.array(self.items)
         inv.item2i = self.item2i.copy()
         inv.counts = np.array(self.counts)
