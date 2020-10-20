@@ -179,7 +179,6 @@ def plot_ratings_dist(sim: BaseSimulator, save_file=None):
     ax.plot(predicted_x, predicted_y, label="predicted rating")
     ax.legend()
     ax.set_xlabel('rating')
-    ax.set_title(f'Distribution of test and predicted ratings in {sim.name} simulation')
 
     if save_file is not None:
         fig.savefig(save_file)
@@ -196,7 +195,6 @@ def multi_plot(simulations: List['BaseSimulator'], data="empty_i",
 
     ax.legend()
     ax.set_xlabel('iteration')
-    ax.set_title(f'Change of {data} throughout the simulations')
 
     if save_file is not None:
         fig.savefig(save_file)
@@ -245,9 +243,8 @@ def multi_success_stops(simulations: List['BaseSimulator'], stops: List[int],
         ax.plot(score, sold, '.-', label=sim.name, linewidth=0.5)
 
     ax.legend()
-    ax.set_xlabel('ranking score')
-    ax.set_ylabel('Items sold [%]')
-    ax.set_title(f'Simulation trace of RSs')
+    ax.set_xlabel('Mera razvrstitve')
+    ax.set_ylabel('Prodani izdelki [%]')
 
     if save_file is not None:
         fig.savefig(save_file)
@@ -275,9 +272,8 @@ def multi_success_err(simulations: List['RepeatedSimulation'], save_file=None):
                     fmt='none', color=color)
 
     plt.legend(handles=handles)
-    ax.set_xlabel('ranking score')
-    ax.set_ylabel('Items sold [%]')
-    ax.set_title(f'Success of RSs')
+    ax.set_xlabel('Mera razvrstitve')
+    ax.set_ylabel('Prodani izdelki [%]')
 
     if save_file is not None:
         fig.savefig(save_file)
