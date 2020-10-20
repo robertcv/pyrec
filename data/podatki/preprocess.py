@@ -68,7 +68,8 @@ def rank_normalization(x):
         print(type(x))
 
 
-# user_item = user_item[['gn', 'score']].groupby(['gn']).transform(rank_normalization)
-# user_item.index = index
-# user_item = user_item.reset_index()
-user_item.to_csv('ratings.csv', index=False)
+user_item = user_item[['gn', 'score']].groupby(['gn']).transform(rank_normalization)
+user_item.index = index
+user_item = user_item[user_item['score'] != 0]
+user_item = user_item.reset_index()
+user_item.to_csv('ratings_norm.csv', index=False)
